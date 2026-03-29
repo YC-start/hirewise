@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-29
-Phase: 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4, A-2, A-3 complete, A-1 next)
+Phase: 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4, A-2, A-3, A-1 complete)
 
 ==============================================================================
 PHASE 0: PLANNING & SPECIFICATION
@@ -172,10 +172,24 @@ PHASE 4: CANDIDATE PROFILE — MODULE D (P0)
 PHASE 5: AGENT CHAT — MODULE A (P0)
 ==============================================================================
 
-  [ ] A-1  Natural language candidate search
-      - Chat input with send functionality
-      - Agent request/response cycle
-      - Results pushed to pipeline
+  [x] A-1  Natural language candidate search
+      - Enhanced use-chat.ts with full end-to-end search flow:
+        1. User types natural language search query (e.g., "Find 50 senior backend engineers with Go + K8s")
+        2. Agent immediately replies with personalized acknowledgement message
+        3. Progress ticker starts (400ms delay for natural feel)
+        4. Progress advances through 4 stages (Searching -> Retrieving -> Scoring -> Complete)
+        5. Action Card appears with dynamic stats and "View Ranking" CTA
+      - Smart job matching: matchJobFromQuery() scores each mock job by title words,
+        JD skills, and department against the user's query, selects best match
+      - Dynamic Action Card: summary, metrics (total/highScore/avgScore), and
+        actionHref all derived from the matched job's real candidate data
+      - Acknowledgement parser: buildAcknowledgement() strips filler words to extract
+        the core search description for the confirmation message
+      - Extended search keyword list: added "hire", "hiring" triggers
+      - Chat input auto-clears on send (already in ChatSidebar + MobileChatView)
+      - Chat auto-scrolls to latest message (useEffect on messages array)
+      - "View Ranking" button navigates to the correct /job/[matchedId]/pipeline
+      - No regressions: A-2 progress ticker and A-3 Action Card still fully functional
 
   [x] A-2  Live progress ticker
       - ProgressIndicator component (src/components/chat/progress-indicator.tsx)
