@@ -1,0 +1,603 @@
+{
+  "meta": {
+    "product": "HireWise",
+    "version": "1.0.0",
+    "generated": "2026-03-28",
+    "total_features": 35,
+    "priority_breakdown": {
+      "P0": 12,
+      "P1": 12,
+      "P2": 11
+    },
+    "note": "P0: 12 features, P1: 12 features, P2: 11 features (includes cross-platform mobile)"
+  },
+  "features": [
+    {
+      "id": "A-1",
+      "module": "A: Agent Chat Sidebar",
+      "name": "Natural language candidate search",
+      "description": "HR can type a free-form recruiting directive (e.g., 'Find 50 senior Go engineers, US timezone') and the Agent initiates a search-and-score pipeline.",
+      "priority": "P0",
+      "user_story": "As a Talent Lead, I can type a natural-language search query into the chat sidebar and the Agent begins retrieving and scoring candidates against the active job's requirements.",
+      "test_steps": [
+        "Open the app; confirm the Agent chat sidebar is visible on the left.",
+        "Type a recruiting directive such as 'Find me 50 senior backend engineers with Go + Kubernetes experience, remote-friendly, US/EU timezone'.",
+        "Press Enter / Send.",
+        "Verify the Agent acknowledges the request and begins processing.",
+        "Verify that candidates begin appearing in the associated job's pipeline within a reasonable timeframe."
+      ],
+      "passes": false
+    },
+    {
+      "id": "A-2",
+      "module": "A: Agent Chat Sidebar",
+      "name": "Live progress ticker during Agent execution",
+      "description": "While the Agent is searching and scoring, a segmented progress bar and real-time status text (e.g., 'Scoring 34/50...') are displayed in the chat thread.",
+      "priority": "P0",
+      "user_story": "As a Talent Lead, I can see a live progress indicator with step-by-step status text so I know the Agent is working and can estimate completion.",
+      "test_steps": [
+        "Trigger a candidate search via chat.",
+        "Observe the chat thread: a segmented horizontal progress bar should appear.",
+        "Verify status text updates in real time (e.g., 'Searching...', '50 resumes retrieved', 'Scoring 34/50...').",
+        "Verify the progress bar segments fill sequentially as steps complete.",
+        "Verify text is rendered in monospace font (JetBrains Mono)."
+      ],
+      "passes": false
+    },
+    {
+      "id": "A-3",
+      "module": "A: Agent Chat Sidebar",
+      "name": "Structured Action Card output",
+      "description": "Upon completing a task, the Agent renders a structured Action Card in the chat thread containing a result summary and actionable buttons (e.g., 'View Ranking').",
+      "priority": "P0",
+      "user_story": "As a Talent Lead, when the Agent finishes processing, I see a structured Action Card summarizing results with a button that navigates me directly to the Ranking View.",
+      "test_steps": [
+        "Complete a candidate search via the Agent.",
+        "Verify an Action Card appears in the chat (left accent border, tertiary surface background).",
+        "Verify the card displays a summary (e.g., '12 candidates scored above 85%').",
+        "Click the 'View Ranking' button on the card.",
+        "Verify navigation to the correct job's /job/:id/pipeline page."
+      ],
+      "passes": false
+    },
+    {
+      "id": "B-1",
+      "module": "B: Job Dashboard",
+      "name": "Job card grid / list view",
+      "description": "The /dashboard page displays all open recruiting positions in a switchable card-grid or compact-list layout.",
+      "priority": "P0",
+      "user_story": "As a Talent Lead, I see all open positions on the dashboard in a card grid (default) or compact list view, switchable with one click.",
+      "test_steps": [
+        "Navigate to /dashboard.",
+        "Verify jobs are displayed in card grid view by default.",
+        "Verify each card uses --surface-secondary background with 1px --border-default border.",
+        "Click the list-view toggle.",
+        "Verify the layout switches to a compact list/table format.",
+        "Click the grid-view toggle to switch back and verify restoration."
+      ],
+      "passes": false
+    },
+    {
+      "id": "B-2",
+      "module": "B: Job Dashboard",
+      "name": "Job card data display",
+      "description": "Each job card shows the job title, status badge (Draft/Active/Paused/Closed), total resume count, high-score candidate count, and candidates in 'Interview Scheduled' state.",
+      "priority": "P0",
+      "user_story": "As a Talent Lead, I can glance at any job card and immediately see its status, total candidates, high-score count, and interview-pending count.",
+      "test_steps": [
+        "Navigate to /dashboard with at least one job containing candidates.",
+        "Verify the job card displays the job title.",
+        "Verify a status badge is visible (one of: Draft, Active, Paused, Closed).",
+        "Verify the total resume count is displayed.",
+        "Verify the high-score candidate count (score > 80%) is displayed.",
+        "Verify the count of candidates in 'Interview Scheduled' state is displayed."
+      ],
+      "passes": false
+    },
+    {
+      "id": "C-1",
+      "module": "C: Candidate Ranking View",
+      "name": "Left rail JD context tags",
+      "description": "The pipeline page displays a left rail showing the Job Description decomposed into context tags: required skills, nice-to-haves, seniority level.",
+      "priority": "P0",
+      "user_story": "As a Talent Lead, I see a left rail on the ranking page displaying JD context tags so I never lose sight of what I'm hiring for while reviewing candidates.",
+      "test_steps": [
+        "Navigate to /job/:id/pipeline for a job with a defined JD.",
+        "Verify a left rail panel is visible.",
+        "Verify the rail displays required skill tags.",
+        "Verify nice-to-have skills are visually differentiated from required skills.",
+        "Verify seniority level is displayed.",
+        "Verify the rail remains visible while scrolling the main candidate list."
+      ],
+      "passes": false
+    },
+    {
+      "id": "C-2",
+      "module": "C: Candidate Ranking View",
+      "name": "Ranked candidate list with scores",
+      "description": "The main panel displays candidates sorted by AI match score descending. Each row shows candidate name/alias, prominent numeric score with horizontal bar, and top 3 matched skill tags.",
+      "priority": "P0",
+      "user_story": "As a Talent Lead, I see candidates ranked by AI score with prominent score display and skill tags so I can quickly identify top matches.",
+      "test_steps": [
+        "Navigate to /job/:id/pipeline with scored candidates.",
+        "Verify candidates are listed in descending score order.",
+        "Verify each row shows the candidate name or alias.",
+        "Verify each row displays the AI match score as a large numeric value.",
+        "Verify a horizontal score bar is rendered with correct color (chartreuse for 80-100, amber for 50-79, red for 0-49).",
+        "Verify up to 3 matched skill tags are displayed per candidate.",
+        "Verify row height is 40-44px and uses alternating --surface-tertiary tint."
+      ],
+      "passes": false
+    },
+    {
+      "id": "D-1",
+      "module": "D: Candidate Profile",
+      "name": "Resume inline preview",
+      "description": "The candidate detail page renders the original resume inline, either as an embedded PDF viewer or a structured timeline extracted from the resume.",
+      "priority": "P0",
+      "user_story": "As a Hiring Manager, I can view the candidate's original resume rendered inline on their profile page without downloading a separate file.",
+      "test_steps": [
+        "Navigate to /job/:id/candidate/:cid for a candidate with an uploaded resume.",
+        "Click or navigate to the Resume tab.",
+        "Verify the resume is rendered inline (PDF embed or structured timeline).",
+        "If PDF: verify the viewer supports scrolling and zoom.",
+        "If timeline: verify work experience entries are displayed chronologically."
+      ],
+      "passes": false
+    },
+    {
+      "id": "D-2",
+      "module": "D: Candidate Profile",
+      "name": "AI Evaluation Report display",
+      "description": "The profile displays the full AI evaluation: overall score, per-dimension breakdown, plain-language reasoning, and explicitly called-out skill gaps.",
+      "priority": "P0",
+      "user_story": "As a Hiring Manager, I see a transparent AI evaluation with score breakdown, reasoning, and identified skill gaps so I understand why the candidate was ranked at this level.",
+      "test_steps": [
+        "Navigate to /job/:id/candidate/:cid for a scored candidate.",
+        "Navigate to the AI Evaluation tab.",
+        "Verify the overall match score is prominently displayed.",
+        "Verify per-dimension scores are shown (e.g., Technical Fit, Culture Fit, Experience Depth).",
+        "Verify plain-language reasoning text is displayed explaining the score.",
+        "Verify skill gaps are explicitly listed."
+      ],
+      "passes": false
+    },
+    {
+      "id": "D-4",
+      "module": "D: Candidate Profile",
+      "name": "Pipeline stage transition buttons",
+      "description": "Action buttons on the candidate profile allow the Talent Lead to move the candidate through pipeline stages: Schedule Interview, Reject, Extend Offer, Hire, Archive.",
+      "priority": "P0",
+      "user_story": "As a Talent Lead, I can transition a candidate through hiring stages by clicking action buttons on their profile, and the pipeline updates immediately.",
+      "test_steps": [
+        "Navigate to /job/:id/candidate/:cid.",
+        "Verify an action bar with stage-transition buttons is visible.",
+        "Click 'Schedule Interview' — verify the candidate's status updates and the button state changes.",
+        "Verify the Job Dashboard card counts update to reflect the status change.",
+        "Verify the Ranking View reflects the new status.",
+        "Test 'Reject' action — verify status updates and destructive styling (--signal-danger)."
+      ],
+      "passes": false
+    },
+    {
+      "id": "LAYOUT-1",
+      "module": "Layout: App Shell",
+      "name": "Persistent chat sidebar with collapse",
+      "description": "The Agent chat sidebar is always present on the left side of the app shell. It can be collapsed to an icon strip on tablet breakpoints and is collapsible manually on desktop.",
+      "priority": "P0",
+      "user_story": "As a Talent Lead, the Agent chat sidebar is always accessible on the left side of the screen, and I can collapse/expand it to manage screen space.",
+      "test_steps": [
+        "Load any page in the app.",
+        "Verify the chat sidebar is visible on the left.",
+        "Click the collapse toggle — verify the sidebar collapses to an icon strip.",
+        "Click again — verify it expands back.",
+        "Resize to tablet width (768-1279px) — verify sidebar auto-collapses to icon strip.",
+        "Resize below 768px — verify sidebar becomes the primary view with bottom nav for dashboard access."
+      ],
+      "passes": false
+    },
+    {
+      "id": "LAYOUT-2",
+      "module": "Layout: App Shell",
+      "name": "Dark theme app shell with design tokens",
+      "description": "The entire application uses the defined dark color system (--surface-primary #0D0D0D background) with the specified typography and component styles. No white/light theme.",
+      "priority": "P0",
+      "user_story": "As a user, the application renders with the defined dark industrial design language — near-black backgrounds, warm off-white text, acid chartreuse accents — from first load.",
+      "test_steps": [
+        "Load the app.",
+        "Verify the body background is --surface-primary (#0D0D0D).",
+        "Verify primary text color is --text-primary (#E8E8E8).",
+        "Verify headings use Space Grotesk font.",
+        "Verify body text uses Inter font.",
+        "Verify at least one primary CTA button uses --accent-primary (#D4FF00) background.",
+        "Verify card components use --surface-secondary (#1A1A1A) background with --border-default (#333333) border."
+      ],
+      "passes": false
+    },
+    {
+      "id": "A-4",
+      "module": "A: Agent Chat Sidebar",
+      "name": "Conversational follow-up and refinement",
+      "description": "The Agent supports follow-up messages that refine previous results (e.g., 'Show only candidates with startup experience') without restarting the entire search pipeline.",
+      "priority": "P1",
+      "user_story": "As a Talent Lead, I can ask follow-up questions in natural language and the Agent refines the current result set without starting a new search from scratch.",
+      "test_steps": [
+        "Complete an initial candidate search.",
+        "Type a refinement message (e.g., 'Show only candidates with startup experience').",
+        "Verify the Agent processes the follow-up in the context of the previous search.",
+        "Verify the ranking view updates to reflect the refined results.",
+        "Verify the previous Action Card in chat is still visible for reference."
+      ],
+      "passes": false
+    },
+    {
+      "id": "A-5",
+      "module": "A: Agent Chat Sidebar",
+      "name": "Agent-drafted JD creation",
+      "description": "The Agent can draft a complete Job Description from a natural-language prompt, presenting it as editable structured output that can be pushed to the Job Dashboard.",
+      "priority": "P1",
+      "user_story": "As a Talent Lead, I can ask the Agent to draft a JD and it produces editable structured output that I can push to the Job Dashboard with one click.",
+      "test_steps": [
+        "Type 'Create a job for Senior Frontend Engineer' in the chat.",
+        "Verify the Agent generates a structured JD draft in the chat.",
+        "Verify the draft is editable (fields can be modified inline).",
+        "Click the 'Create Job' / 'Push to Dashboard' button.",
+        "Verify a new job card appears on /dashboard with the drafted content."
+      ],
+      "passes": false
+    },
+    {
+      "id": "B-3",
+      "module": "B: Job Dashboard",
+      "name": "Quick-create job modal",
+      "description": "A modal accessible from the dashboard's '+ New Job' button allows rapid job creation with minimal required fields (title, department, seniority).",
+      "priority": "P1",
+      "user_story": "As a Talent Lead, I can create a new job directly from the dashboard via a quick-create modal without navigating away.",
+      "test_steps": [
+        "Navigate to /dashboard.",
+        "Click the '+ New Job' button.",
+        "Verify a modal appears with fields for job title, department, and seniority level.",
+        "Fill in the required fields and submit.",
+        "Verify the new job card appears on the dashboard immediately.",
+        "Verify the modal closes after successful creation."
+      ],
+      "passes": false
+    },
+    {
+      "id": "B-4",
+      "module": "B: Job Dashboard",
+      "name": "Archive/close job",
+      "description": "A job can be archived or closed, freezing its pipeline and preserving all data. Closed jobs are visually demoted on the dashboard.",
+      "priority": "P1",
+      "user_story": "As a Talent Lead, I can archive or close a job, which freezes its pipeline while preserving all historical data.",
+      "test_steps": [
+        "Navigate to /dashboard.",
+        "Open the context menu or settings for an active job.",
+        "Select 'Close' or 'Archive'.",
+        "Verify the job status badge updates to 'Closed'.",
+        "Navigate to the job's pipeline — verify it is in a read-only / frozen state.",
+        "Verify the job card is visually demoted (e.g., lower opacity, moved to a separate section)."
+      ],
+      "passes": false
+    },
+    {
+      "id": "C-3",
+      "module": "C: Candidate Ranking View",
+      "name": "Bulk actions on candidates",
+      "description": "Multi-select candidates in the ranking list to perform bulk operations: Advance to Interview, Reject, or Export to CSV.",
+      "priority": "P1",
+      "user_story": "As a Talent Lead, I can multi-select candidates and perform bulk actions so I can efficiently process large candidate pools.",
+      "test_steps": [
+        "Navigate to /job/:id/pipeline with multiple candidates.",
+        "Select multiple candidates using checkboxes or shift-click.",
+        "Verify a bulk action toolbar appears.",
+        "Click 'Advance to Interview' — verify all selected candidates' statuses update.",
+        "Test 'Reject' bulk action — verify status updates for all selected.",
+        "Test 'Export to CSV' — verify a CSV file is downloaded with the selected candidates' data."
+      ],
+      "passes": false
+    },
+    {
+      "id": "C-4",
+      "module": "C: Candidate Ranking View",
+      "name": "Inline candidate preview expansion",
+      "description": "Clicking a candidate row in the ranking list expands an inline preview panel showing key details, or the user can navigate to the full profile page.",
+      "priority": "P1",
+      "user_story": "As a Talent Lead, I can click a candidate row to see an inline preview without leaving the ranking list, or navigate to the full profile for deep review.",
+      "test_steps": [
+        "Navigate to /job/:id/pipeline.",
+        "Click on a candidate row.",
+        "Verify an inline preview panel expands below/beside the row.",
+        "Verify the preview shows key candidate details (score breakdown, top skills, summary).",
+        "Verify a 'View Full Profile' link/button is present.",
+        "Click 'View Full Profile' — verify navigation to /job/:id/candidate/:cid."
+      ],
+      "passes": false
+    },
+    {
+      "id": "C-5",
+      "module": "C: Candidate Ranking View",
+      "name": "Sub-score sorting and skill filtering",
+      "description": "The ranking list can be re-sorted by sub-score dimensions (Technical Fit, Culture Fit, Experience Depth) and filtered by specific skill tags.",
+      "priority": "P1",
+      "user_story": "As a Talent Lead, I can re-sort candidates by sub-scores or filter by skill tags to find the best match for specific dimensions.",
+      "test_steps": [
+        "Navigate to /job/:id/pipeline with scored candidates.",
+        "Click the sort dropdown and select 'Technical Fit'.",
+        "Verify the list re-sorts by Technical Fit score descending.",
+        "Select a skill tag filter (e.g., 'Kubernetes').",
+        "Verify only candidates with that skill tag are shown.",
+        "Clear the filter — verify the full list is restored."
+      ],
+      "passes": false
+    },
+    {
+      "id": "D-3",
+      "module": "D: Candidate Profile",
+      "name": "AI-generated interview questions",
+      "description": "The candidate profile includes an Interview Prep tab with AI-generated questions tailored to the candidate's profile mapped against the JD requirements.",
+      "priority": "P1",
+      "user_story": "As a Hiring Manager, I see AI-generated tailored interview questions so I can prepare targeted interviews based on each candidate's specific profile.",
+      "test_steps": [
+        "Navigate to /job/:id/candidate/:cid.",
+        "Click the Interview Prep tab.",
+        "Verify a list of AI-generated interview questions is displayed.",
+        "Verify questions reference specific aspects of the candidate's experience.",
+        "Verify questions map to JD requirements (skills, experience levels).",
+        "Verify questions cover identified skill gaps from the evaluation."
+      ],
+      "passes": false
+    },
+    {
+      "id": "D-5",
+      "module": "D: Candidate Profile",
+      "name": "Internal notes on candidate",
+      "description": "Team members can leave internal notes on a candidate profile, visible to all members of the hiring team for that job.",
+      "priority": "P1",
+      "user_story": "As a Talent Lead, I can leave internal notes on a candidate that are visible to the hiring team, so we can collaborate on evaluation.",
+      "test_steps": [
+        "Navigate to /job/:id/candidate/:cid.",
+        "Navigate to the Notes & Activity tab.",
+        "Type a note in the input field and submit.",
+        "Verify the note appears in the activity feed with author name and timestamp.",
+        "Verify the note persists on page reload.",
+        "Verify the note is visible when another team member views the same candidate."
+      ],
+      "passes": false
+    },
+    {
+      "id": "B-5",
+      "module": "B: Job Dashboard",
+      "name": "Dashboard filtering by owner/department",
+      "description": "The Job Dashboard supports filtering by job owner and department so users can quickly find relevant positions.",
+      "priority": "P1",
+      "user_story": "As a Hiring Manager, I can filter the dashboard to see only jobs I own or jobs in my department.",
+      "test_steps": [
+        "Navigate to /dashboard with multiple jobs across departments.",
+        "Click the department filter dropdown and select a department.",
+        "Verify only jobs in that department are displayed.",
+        "Select the 'My Jobs' / owner filter.",
+        "Verify only jobs owned by the current user are displayed.",
+        "Clear all filters — verify the full job list is restored."
+      ],
+      "passes": false
+    },
+    {
+      "id": "A-6",
+      "module": "A: Agent Chat Sidebar",
+      "name": "Chat message styling and distinction",
+      "description": "User messages use --accent-primary background with dark text. Agent messages use --surface-secondary background. No rounded speech-bubble tails — rectangular only.",
+      "priority": "P1",
+      "user_story": "As a user, I can clearly distinguish my messages from the Agent's messages through distinct visual styling.",
+      "test_steps": [
+        "Open the chat sidebar.",
+        "Send a message.",
+        "Verify user message has --accent-primary (#D4FF00) background with #0D0D0D text.",
+        "Verify the Agent response has --surface-secondary (#1A1A1A) background.",
+        "Verify both message types are rectangular (no speech-bubble tails).",
+        "Verify no border-radius exceeds 4px."
+      ],
+      "passes": false
+    },
+    {
+      "id": "NAV-1",
+      "module": "Layout: Navigation",
+      "name": "Quick-command suggestions in chat",
+      "description": "The chat sidebar displays contextual quick-command suggestion chips (e.g., 'Find candidates', 'Create job', 'Summarize pipeline') that the user can tap to pre-fill the input.",
+      "priority": "P1",
+      "user_story": "As a Talent Lead, I see suggested quick-commands in the chat sidebar so I can discover available actions without memorizing commands.",
+      "test_steps": [
+        "Open the chat sidebar on an empty state or after completing a task.",
+        "Verify suggestion chips are displayed (e.g., 'Find candidates', 'Create job').",
+        "Click a suggestion chip.",
+        "Verify the chip's text pre-fills the chat input field.",
+        "Verify suggestions are contextual (different suggestions on /dashboard vs /job/:id/pipeline)."
+      ],
+      "passes": false
+    },
+    {
+      "id": "PERF-1",
+      "module": "Non-Functional: Performance",
+      "name": "Dashboard render under 1.5 seconds",
+      "description": "The /dashboard and ranking list pages must fully render (first contentful paint + data populated) within 1.5 seconds on a 4G connection.",
+      "priority": "P2",
+      "user_story": "As a user on a moderate connection, the dashboard and ranking pages load quickly enough that I never feel like I'm waiting.",
+      "test_steps": [
+        "Open Chrome DevTools, set network throttling to 'Fast 3G' or '4G' simulation.",
+        "Navigate to /dashboard.",
+        "Measure time from navigation start to Largest Contentful Paint (LCP).",
+        "Verify LCP is under 1500ms.",
+        "Navigate to /job/:id/pipeline with 100+ candidates.",
+        "Verify LCP is under 1500ms."
+      ],
+      "passes": false
+    },
+    {
+      "id": "PERF-2",
+      "module": "Non-Functional: Performance",
+      "name": "Chat streaming response under 500ms",
+      "description": "When the user sends a message, the first token of the Agent's streaming response must appear within 500ms.",
+      "priority": "P2",
+      "user_story": "As a user, when I send a message the Agent starts responding almost immediately so the interaction feels conversational.",
+      "test_steps": [
+        "Open the chat sidebar.",
+        "Type and send a message.",
+        "Measure time from send to first visible token of the Agent's response.",
+        "Verify first token appears within 500ms.",
+        "Repeat 3 times to confirm consistency."
+      ],
+      "passes": false
+    },
+    {
+      "id": "PERF-3",
+      "module": "Non-Functional: Performance",
+      "name": "Virtualized list for 10k+ candidates",
+      "description": "The candidate ranking list uses virtualized rendering to support 10,000+ candidates per job pipeline without UI degradation or excessive memory usage.",
+      "priority": "P2",
+      "user_story": "As a Talent Lead working on a high-volume role, the ranking list remains smooth and responsive even with 10,000+ candidates.",
+      "test_steps": [
+        "Load a job pipeline with 10,000+ candidates (use test data seeding).",
+        "Scroll through the ranking list.",
+        "Verify scrolling remains smooth (no dropped frames visible).",
+        "Check browser memory usage — verify it does not exceed 500MB.",
+        "Verify only a subset of DOM rows are rendered at any time (inspect DOM element count)."
+      ],
+      "passes": false
+    },
+    {
+      "id": "A11Y-1",
+      "module": "Non-Functional: Accessibility",
+      "name": "Keyboard navigation for all interactive elements",
+      "description": "All interactive elements (buttons, links, form controls, table rows, modals) are focusable and operable via keyboard alone. Focus indicators are visible.",
+      "priority": "P2",
+      "user_story": "As a user who relies on keyboard navigation, I can access and operate every feature without a mouse.",
+      "test_steps": [
+        "Start at /dashboard. Press Tab repeatedly.",
+        "Verify focus moves through all interactive elements in logical order.",
+        "Verify focus indicator is clearly visible (not hidden or barely visible).",
+        "Navigate into the chat sidebar via keyboard and send a message using Enter.",
+        "Navigate to /job/:id/pipeline and use arrow keys / Tab to move through the candidate list.",
+        "Open a modal (e.g., '+ New Job') using keyboard and verify it traps focus correctly."
+      ],
+      "passes": false
+    },
+    {
+      "id": "A11Y-2",
+      "module": "Non-Functional: Accessibility",
+      "name": "Screen reader support for data tables",
+      "description": "All data tables (ranking list, dashboard grid) have proper ARIA labels, row/column headers, and live regions for dynamic updates.",
+      "priority": "P2",
+      "user_story": "As a screen reader user, I can understand and navigate the candidate ranking table and job dashboard with full context announced.",
+      "test_steps": [
+        "Enable a screen reader (VoiceOver / NVDA).",
+        "Navigate to /dashboard — verify job cards are announced with title, status, and counts.",
+        "Navigate to /job/:id/pipeline — verify the table has proper headers announced.",
+        "Verify candidate rows announce name, score, and skill tags.",
+        "Trigger a candidate search via chat — verify the live region announces when results are ready."
+      ],
+      "passes": false
+    },
+    {
+      "id": "DATA-1",
+      "module": "Non-Functional: Data Privacy",
+      "name": "Resume data encryption at rest",
+      "description": "All uploaded resume files and extracted candidate data are encrypted at rest in the database and file storage layer.",
+      "priority": "P2",
+      "user_story": "As an organization handling sensitive candidate data, resume files and personal information are encrypted at rest to meet compliance requirements.",
+      "test_steps": [
+        "Upload a resume via the application.",
+        "Verify the file is stored in an encrypted storage bucket (Supabase storage encryption or equivalent).",
+        "Query the database directly — verify candidate PII fields are not stored in plaintext.",
+        "Verify the application's Supabase project has Row Level Security (RLS) enabled.",
+        "Verify SSL/TLS is enforced for all database connections."
+      ],
+      "passes": false
+    },
+    {
+      "id": "DATA-2",
+      "module": "Non-Functional: Data Privacy",
+      "name": "GDPR candidate deletion",
+      "description": "Candidates can be fully anonymized or deleted on request, removing all PII from the database, file storage, and AI evaluation records.",
+      "priority": "P2",
+      "user_story": "As a Talent Lead responding to a GDPR deletion request, I can fully anonymize or delete a candidate's data from all systems.",
+      "test_steps": [
+        "Navigate to a candidate's profile.",
+        "Trigger the 'Delete / Anonymize' action (via settings or admin panel).",
+        "Verify the candidate's name, contact info, and resume file are removed.",
+        "Verify the candidate row in the ranking list shows 'Anonymized' or is removed.",
+        "Verify the AI evaluation report for this candidate no longer references PII.",
+        "Verify the deletion is logged in an audit trail."
+      ],
+      "passes": false
+    },
+    {
+      "id": "I18N-1",
+      "module": "Non-Functional: Internationalization",
+      "name": "Externalized strings for i18n readiness",
+      "description": "All user-facing strings are externalized into locale files (English default). The architecture supports future addition of CJK and RTL language packs without code changes to components.",
+      "priority": "P2",
+      "user_story": "As a product team planning international expansion, all UI strings are externalized so adding new languages requires only translation files, not code changes.",
+      "test_steps": [
+        "Verify a locale directory or i18n configuration exists in the project.",
+        "Verify all user-facing strings in components reference externalized keys, not hardcoded text.",
+        "Add a test locale file (e.g., pseudo-locale with prefixed strings).",
+        "Switch the app to the test locale and verify all visible strings update.",
+        "Verify date and number formats respect locale settings.",
+        "Verify the layout does not break when strings are 50% longer (simulating German/French expansion)."
+      ],
+      "passes": false
+    },
+    {
+      "id": "MOB-1",
+      "module": "Cross-Platform: Mobile",
+      "name": "Responsive mobile layout with bottom tab navigation",
+      "description": "On screens below 768px (including Capacitor iOS/Android), the app switches to a bottom tab navigation with Chat, Dashboard, and Pipeline as primary tabs. Sidebar is hidden; chat becomes a full-screen tab.",
+      "priority": "P2",
+      "user_story": "As a Talent Lead using the mobile app, I can navigate between Chat, Dashboard, and Pipeline via a bottom tab bar that feels native on iOS/Android.",
+      "test_steps": [
+        "Open the app on a mobile viewport (below 768px) or in Capacitor simulator.",
+        "Verify a bottom tab bar is visible with Chat, Dashboard, and Pipeline icons.",
+        "Verify the desktop sidebar is NOT visible.",
+        "Tap each tab — verify the correct view loads.",
+        "Verify the active tab has --accent-primary highlight.",
+        "Verify safe area insets are respected on iOS (notch, home indicator)."
+      ],
+      "passes": false
+    },
+    {
+      "id": "MOB-2",
+      "module": "Cross-Platform: Mobile",
+      "name": "Swipe gestures on candidate cards",
+      "description": "On mobile, candidate rows in the ranking list support swipe gestures: swipe right to advance to interview, swipe left to reject. Haptic feedback confirms the action.",
+      "priority": "P2",
+      "user_story": "As a Talent Lead on mobile, I can quickly process candidates by swiping cards left (reject) or right (advance), with haptic feedback confirming my action.",
+      "test_steps": [
+        "Open /job/:id/pipeline on a mobile viewport or Capacitor simulator.",
+        "Swipe a candidate card to the right.",
+        "Verify a green 'Advance' action is revealed and triggers on full swipe.",
+        "Verify haptic feedback fires on action trigger (Capacitor only).",
+        "Swipe a candidate card to the left.",
+        "Verify a red 'Reject' action is revealed and triggers on full swipe.",
+        "Verify the candidate's status updates after swipe action."
+      ],
+      "passes": false
+    },
+    {
+      "id": "MOB-3",
+      "module": "Cross-Platform: Mobile",
+      "name": "Pull-to-refresh on all list views",
+      "description": "On mobile, all list views (Dashboard, Ranking, Chat) support pull-to-refresh gesture to reload data.",
+      "priority": "P2",
+      "user_story": "As a mobile user, I can pull down on any list to refresh the data without hunting for a reload button.",
+      "test_steps": [
+        "Open /dashboard on mobile viewport.",
+        "Pull down on the job list.",
+        "Verify a refresh indicator appears and data reloads.",
+        "Navigate to /job/:id/pipeline and pull-to-refresh.",
+        "Verify the candidate list refreshes with latest data.",
+        "Verify the refresh indicator animation is smooth."
+      ],
+      "passes": false
+    }
+  ]
+}

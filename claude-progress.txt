@@ -1,0 +1,136 @@
+==============================================================================
+  HIREWISE — AI-Native Recruiting Agent Platform
+  Build Progress Tracker
+==============================================================================
+
+Last updated: 2026-03-28
+Phase: 0 — Planning & Specification
+
+==============================================================================
+PHASE 0: PLANNING & SPECIFICATION
+==============================================================================
+
+  [x] Product Spec document (PRODUCT_SPEC.md)
+  [x] Feature checklist with test steps (features.json)
+  [x] Init script for dev environment (init.sh)
+  [x] Progress tracker (this file)
+  [ ] Run init.sh to scaffold project
+
+==============================================================================
+PHASE 1: APP SHELL & DESIGN SYSTEM (P0 — Layout)
+==============================================================================
+
+  [ ] LAYOUT-2  Dark theme app shell with design tokens
+      - CSS custom properties for full color system
+      - Font loading: Space Grotesk, Inter, JetBrains Mono
+      - Base global styles (dark background, typography)
+
+  [ ] LAYOUT-1  Persistent chat sidebar with collapse
+      - App shell layout: sidebar + main content area
+      - Sidebar collapse/expand toggle
+      - Responsive behavior (tablet icon-strip, mobile chat-only)
+
+==============================================================================
+PHASE 2: JOB DASHBOARD — MODULE B (P0)
+==============================================================================
+
+  [ ] B-1  Job card grid / list view
+      - /dashboard route with card grid (default) and list view
+      - View toggle component
+
+  [ ] B-2  Job card data display
+      - Status badge component (Draft/Active/Paused/Closed)
+      - Metrics display: resume count, high-score count, interview count
+
+==============================================================================
+PHASE 3: CANDIDATE RANKING VIEW — MODULE C (P0)
+==============================================================================
+
+  [ ] C-1  Left rail JD context tags
+      - /job/:id/pipeline route
+      - Left rail with JD skill tags and seniority
+
+  [ ] C-2  Ranked candidate list with scores
+      - Sorted list component with score bars
+      - Score color coding (chartreuse/amber/red)
+      - Skill tag chips
+
+==============================================================================
+PHASE 4: CANDIDATE PROFILE — MODULE D (P0)
+==============================================================================
+
+  [ ] D-1  Resume inline preview
+      - /job/:id/candidate/:cid route
+      - PDF embed or structured timeline
+
+  [ ] D-2  AI Evaluation Report display
+      - Score breakdown by dimension
+      - Reasoning text and skill gaps
+
+  [ ] D-4  Pipeline stage transition buttons
+      - Action bar with status flow buttons
+      - Status persistence and cross-page updates
+
+==============================================================================
+PHASE 5: AGENT CHAT — MODULE A (P0)
+==============================================================================
+
+  [ ] A-1  Natural language candidate search
+      - Chat input with send functionality
+      - Agent request/response cycle
+      - Results pushed to pipeline
+
+  [ ] A-2  Live progress ticker
+      - Segmented progress bar component
+      - Real-time status text updates
+
+  [ ] A-3  Structured Action Card output
+      - Action Card component (left accent border, buttons)
+      - Navigation from card to ranking view
+
+==============================================================================
+PHASE 6: P1 FEATURES
+==============================================================================
+
+  [ ] A-4  Conversational follow-up and refinement
+  [ ] A-5  Agent-drafted JD creation
+  [ ] A-6  Chat message styling and distinction
+  [ ] B-3  Quick-create job modal
+  [ ] B-4  Archive/close job
+  [ ] B-5  Dashboard filtering by owner/department
+  [ ] C-3  Bulk actions on candidates
+  [ ] C-4  Inline candidate preview expansion
+  [ ] C-5  Sub-score sorting and skill filtering
+  [ ] D-3  AI-generated interview questions
+  [ ] D-5  Internal notes on candidate
+  [ ] NAV-1 Quick-command suggestions in chat
+
+==============================================================================
+PHASE 7: P2 — NON-FUNCTIONAL & POLISH
+==============================================================================
+
+  [ ] PERF-1  Dashboard render under 1.5 seconds
+  [ ] PERF-2  Chat streaming response under 500ms
+  [ ] PERF-3  Virtualized list for 10k+ candidates
+  [ ] A11Y-1  Keyboard navigation
+  [ ] A11Y-2  Screen reader support
+  [ ] DATA-1  Resume data encryption at rest
+  [ ] DATA-2  GDPR candidate deletion
+  [ ] I18N-1  Externalized strings for i18n readiness
+
+==============================================================================
+NOTES
+==============================================================================
+
+Tech stack: Next.js 14+ (App Router) / TypeScript / Tailwind CSS 4 / Radix UI
+            Zustand + TanStack Query / Vercel AI SDK / Supabase / Phosphor Icons
+Deploy:     Vercel (git-push auto-deploy)
+Design:     "Industrial Clarity" — dark theme, acid chartreuse accent (#D4FF00)
+GitHub:     https://github.com/YC-start/hirewise
+
+How to resume:
+  1. Read this file for current progress.
+  2. Read features.json for detailed test criteria.
+  3. Pick the next unchecked item in the current phase.
+  4. Implement, test against the test_steps in features.json, mark [x] here.
+  5. Update the "passes" field in features.json to true when all tests pass.
