@@ -1,6 +1,6 @@
 # HireWise — AI-Native Recruiting Agent Platform
 
-## Product Specification v1.0
+## Product Specification v2.1
 
 ---
 
@@ -8,7 +8,7 @@
 
 **One-liner:** The command line for recruiting — speak what you need, watch the pipeline materialize.
 
-HireWise is an AI-native recruiting operations platform built for overseas (global/cross-border) HR teams. It collapses the traditional 7-tool recruiting stack into a single dual-interface workspace: a conversational agent sidebar (CUI) that accepts natural-language recruiting directives, paired with a structured data dashboard (GUI) that surfaces every AI-generated insight as a living, sortable, actionable artifact.
+HireWise is an AI-native recruiting operations platform built for overseas (global/cross-border) HR teams. It collapses the traditional 7-tool recruiting stack into a single **conversation-first** workspace: the AI Agent chat occupies the center stage as the primary interaction surface, while structured data panels (Dashboard, Pipeline, Candidate Profile) live in a collapsible right-hand sidebar. Every recruiting action — creating jobs, sourcing candidates, evaluating talent — begins as a natural-language conversation and materializes into durable, queryable data.
 
 **Why now:**
 - LLM capability has crossed the threshold for reliable resume-to-JD semantic matching.
@@ -16,7 +16,8 @@ HireWise is an AI-native recruiting operations platform built for overseas (glob
 - HR teams want AI leverage without learning prompt engineering.
 
 **Competitive moat:**
-- Chat-to-Action paradigm: every conversation turn produces durable, queryable data — not throwaway text.
+- Conversation-first paradigm: every recruiting action starts as natural language and produces durable, queryable data — not throwaway text.
+- Real candidate data from external APIs (Coresignal / Apollo.io) — no mock data, no manual upload required.
 - Transparent AI scoring with full reasoning traces — no black-box recommendations.
 - Opinionated workflow defaults that encode best-practice recruiting ops out of the box.
 
@@ -43,7 +44,7 @@ HireWise is an AI-native recruiting operations platform built for overseas (glob
 
 ## 3. Core User Stories (by Module)
 
-### Module A — Global Agent Chat Sidebar (CUI)
+### Module A — Global Agent Chat (Main Area / CUI)
 
 | ID | Story |
 |----|-------|
@@ -51,7 +52,7 @@ HireWise is an AI-native recruiting operations platform built for overseas (glob
 | A-2 | As a Talent Lead, I can see a live progress ticker ("Searching... 50 resumes retrieved... Scoring 34/50...") so I know the Agent is working and roughly how long to wait. |
 | A-3 | As a Talent Lead, when the Agent finishes, I see a structured Action Card in the chat with a summary (e.g., "12 candidates scored above 85%") and a button that jumps me directly to the Ranking View for that job. |
 | A-4 | As a Talent Lead, I can ask follow-up questions in natural language ("Show me only candidates with startup experience" / "Re-rank excluding anyone without a CS degree") and the Agent refines results without starting over. |
-| A-5 | As a Talent Lead, I can ask the Agent to draft a JD, and it produces editable structured output that I can push to the Job Dashboard with one click. |
+| A-5 | (**UPGRADED to P0 — merged into FLOW-1**) As a Talent Lead, I describe a hiring need in natural language (e.g., "Hire a 3-year energy storage sales rep in Mexico"), and the Agent extracts structured fields, generates a full JD preview, and — upon my confirmation — creates the Job and inserts it into the pipeline automatically. No form-filling required. |
 
 ### Module B — Job Dashboard (Work台)
 
@@ -59,7 +60,7 @@ HireWise is an AI-native recruiting operations platform built for overseas (glob
 |----|-------|
 | B-1 | As a Talent Lead, I see all open positions in a card grid (default) or compact list view, switchable with one click. |
 | B-2 | Each job card shows: job title, status badge (Draft / Active / Paused / Closed), total resumes received, count of high-score candidates (>80%), and count of candidates in "Interview Scheduled" state. |
-| B-3 | As a Talent Lead, I can create a new job directly from the dashboard via a quick-create modal or by telling the Agent in chat. |
+| B-3 | **DEPRECATED** — Replaced by conversational job creation (FLOW-1). Job creation is now exclusively through the AI Agent chat. The quick-create modal is removed. |
 | B-4 | As a Talent Lead, I can archive/close a job, which freezes its pipeline but preserves all data for future reference. |
 | B-5 | As a Hiring Manager, I can filter the dashboard to see only jobs I own or jobs in my department. |
 
@@ -134,10 +135,10 @@ Reject the default SaaS aesthetic of pastel gradients on white cards. HireWise t
 
 ### Layout Principles
 
-- **Sidebar-first:** The Agent chat sidebar is always present on the left (collapsible). Main content fills remaining width.
+- **Conversation-center:** The AI Agent chat occupies the main area (60-70% width). Data panels live in a collapsible right sidebar (30-40% width). The chat is the command center; the sidebar is the reference panel.
 - **Dense by default:** Optimize for information density. Whitespace is used structurally (to group), never decoratively.
-- **No hero sections, no splash screens.** The product opens directly to the Job Dashboard with the chat sidebar ready.
-- **Responsive breakpoints:** Desktop-first (1280px+). Tablet (768-1279px) collapses sidebar to icon-strip. Mobile / Native App (below 768px) switches to bottom tab navigation with chat as primary tab, dashboard and pipeline as secondary tabs.
+- **No hero sections, no splash screens.** The product opens directly to the AI chat with the data sidebar showing the Jobs panel.
+- **Responsive breakpoints:** Desktop-first (1280px+). Tablet (768-1279px) collapses data sidebar to icon-strip. Mobile / Native App (below 768px) switches to full-screen chat as default, with bottom tab navigation to access data panels (Jobs, Pipeline, Profile).
 - **Mobile-native UX:** On Capacitor (iOS/Android), leverage native safe areas, haptic feedback on actions, pull-to-refresh, and swipe gestures for candidate card actions (swipe right = advance, swipe left = reject).
 
 ---
@@ -177,54 +178,86 @@ Reject the default SaaS aesthetic of pastel gradients on white cards. HireWise t
 
 ## 6. Information Architecture / Page Flow
 
+### Layout Paradigm: Conversation-Center, Data-Sidebar
+
+The AI Agent chat is the **primary interaction surface**, occupying 60-70% of the viewport width (center/left area). Structured data panels live in a **collapsible right-hand sidebar** (30-40% width) that can switch between different views.
+
 ```
-[App Shell]
-├── [Sidebar: Agent Chat]  ← always present, collapsible
-│   ├── Chat thread
-│   ├── Action Cards (inline)
+[App Shell — Desktop 1280px+]
+├── [Main Area: Agent Chat — 60-70% width]  ← PRIMARY
+│   ├── Chat thread (full conversation history)
+│   ├── Action Cards (inline structured outputs)
+│   ├── JD Preview Cards (editable, confirm-to-create)
+│   ├── Candidate Search Results (inline summaries)
 │   └── Quick-command suggestions
 │
-├── /dashboard  ← default landing
-│   ├── Job Card Grid / List
-│   ├── Filters (status, department, owner)
-│   └── "+ New Job" action
+├── [Right Sidebar: Data Panels — 30-40% width, collapsible]
+│   ├── Tab: Jobs Dashboard
+│   │   ├── Job Card Grid / List
+│   │   └── Filters (status, department, owner)
+│   ├── Tab: Pipeline (for active job)
+│   │   ├── JD context tags
+│   │   ├── Candidate ranked list
+│   │   └── Bulk actions toolbar
+│   ├── Tab: Candidate Profile (for selected candidate)
+│   │   ├── Resume (PDF viewer / timeline)
+│   │   ├── AI Evaluation Report
+│   │   ├── Interview Prep (AI questions)
+│   │   └── Action bar: stage transition buttons
+│   └── Collapse toggle → hides sidebar, chat goes full-width
 │
-├── /job/:id/pipeline  ← Ranking View
-│   ├── Left rail: JD context tags
-│   ├── Main: Candidate ranked list
-│   ├── Toolbar: bulk actions, sort, filter
-│   └── Inline candidate preview (expandable row)
-│
-├── /job/:id/candidate/:cid  ← Candidate Profile
-│   ├── Tab: Resume (PDF viewer / timeline)
-│   ├── Tab: AI Evaluation Report
-│   ├── Tab: Interview Prep (AI questions)
-│   ├── Tab: Notes & Activity
-│   └── Action bar: stage transition buttons
-│
-├── /job/:id/settings  ← Job config
-│   ├── JD editor
-│   ├── Scoring weight configuration
-│   └── Team access / permissions
-│
-└── /settings  ← App-level settings
+└── /settings  ← App-level settings (full page)
     ├── Account / Team management
     ├── AI model preferences
-    └── Integrations (ATS, calendar, email)
+    └── Integrations (Coresignal, Apollo.io, ATS, calendar, email)
+
+[Mobile — below 768px]
+├── AI Chat → full screen (default primary view)
+├── Data panels → accessible via bottom tabs or swipe gesture
+└── Bottom tab bar: Chat | Jobs | Pipeline | Profile
 ```
 
-### Navigation Flow
+### Core Workflow: Natural Language → Structured Data → External API → AI Evaluation
 
-1. **Entry:** User lands on `/dashboard`. Chat sidebar is open with a greeting + suggested actions.
-2. **Create Job:** User types in chat "Create a job for Senior Frontend Engineer" → Agent drafts JD → User confirms → Job card appears on dashboard.
-3. **Source Candidates:** User clicks into a job → sees empty pipeline → types in chat "Find candidates for this role" → Agent searches, scores, populates pipeline.
-4. **Review:** User scrolls ranked list, clicks into top candidates, reads AI eval, prepares for interviews.
-5. **Act:** User schedules interviews, rejects poor fits, extends offers — all via action buttons on the Candidate Profile.
-6. **Close:** User marks job as filled → pipeline freezes → data archived.
+1. **Entry:** User lands on the AI chat (main area). Right sidebar shows Jobs Dashboard with greeting + suggested actions.
+2. **Create Job (Conversational):** User describes hiring need in natural language (e.g., "Hire a 3-year energy storage sales rep in Mexico") → Agent extracts structured fields (title, location, experience, industry, skills) → Agent generates full JD preview as an editable Action Card in chat → User confirms or modifies → Job auto-created and appears in sidebar Jobs panel. **No form, no modal.**
+3. **Source Candidates (External API):** Agent calls Coresignal or Apollo.io API with structured search parameters derived from the JD → retrieves real candidate profiles → structures and normalizes the data → performs AI scoring against JD requirements → populates the Pipeline panel in the sidebar.
+4. **Review:** User reads AI-scored ranking in the sidebar Pipeline tab. Clicks a candidate to load their full Profile in the sidebar. Reads AI evaluation with transparent reasoning.
+5. **Act:** User schedules interviews, rejects poor fits, extends offers — via action buttons in the sidebar Profile tab, or by telling the Agent in chat ("Reject candidates below 60 score").
+6. **Close:** User tells Agent "Close this role" or clicks archive in sidebar → pipeline freezes → data archived.
 
 ---
 
-## 7. Non-Functional Requirements
+## 7. External API Integration
+
+### Candidate Data Sources
+
+HireWise replaces all mock/seed data with real candidate profiles sourced from external professional data APIs. The Agent orchestrates the entire search-to-evaluation pipeline.
+
+| Provider | Purpose | Data Available |
+|----------|---------|---------------|
+| **Coresignal** (primary) | Professional profile search | Work history, education, skills, certifications, location, company data |
+| **Apollo.io** (alternative) | People + company enrichment | Contact info, job titles, company details, technology stacks |
+
+### Integration Architecture
+
+1. **Query Construction:** The Agent parses the JD's structured fields (title, skills, experience, location, industry) into API-compatible search parameters.
+2. **Search Execution:** API calls to Coresignal/Apollo.io retrieve candidate profiles matching the search criteria.
+3. **Structuring:** The Agent normalizes raw API responses into HireWise's internal Candidate schema (name, experience timeline, skills, education, certifications).
+4. **AI Scoring:** Each structured candidate profile is scored against the JD using multi-dimensional evaluation (Technical Fit, Culture Fit, Experience Depth, Leadership Potential). Full reasoning traces are generated.
+5. **Ranking & Presentation:** Scored candidates are ranked and presented in the Pipeline panel, with Action Cards summarizing results in the chat.
+
+### Data Handling Principles
+
+- Raw API responses are cached to minimize redundant API calls (TTL-based).
+- Candidate data is stored in Supabase after structuring (not raw API payloads).
+- API keys are managed via environment variables, never exposed client-side.
+- Rate limiting and error handling for API quotas.
+- Graceful degradation if an external API is unavailable (show cached results, inform user).
+
+---
+
+## 8. Non-Functional Requirements
 
 - **Performance:** Dashboard and ranking list must render within 1.5s on 4G connection. Chat responses must begin streaming within 500ms.
 - **Accessibility:** WCAG 2.1 AA compliance. Full keyboard navigation. Screen reader support for all data tables.
@@ -234,4 +267,4 @@ Reject the default SaaS aesthetic of pastel gradients on white cards. HireWise t
 
 ---
 
-*Document version: 1.0 | Date: 2026-03-28 | Status: Draft*
+*Document version: 2.1 | Date: 2026-03-29 | Status: Draft — Major pivot: conversation-center layout, conversational job creation, external API integration*

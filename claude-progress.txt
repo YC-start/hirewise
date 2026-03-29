@@ -4,7 +4,8 @@
 ==============================================================================
 
 Last updated: 2026-03-29
-Phase: 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4, A-2, A-3, A-1 complete)
+Phase: PIVOT — Product Direction Reset (v2.1 Spec)
+Previous phase completed: Phase 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4, A-2, A-3, A-1 complete)
 
 ==============================================================================
 PHASE 0: PLANNING & SPECIFICATION
@@ -221,26 +222,82 @@ PHASE 5: AGENT CHAT — MODULE A (P0)
       - data-testid attributes on card, title, summary, metrics, CTA button
 
 ==============================================================================
-PHASE 6: P1 FEATURES
+PRODUCT DIRECTION PIVOT — 2026-03-29
+==============================================================================
+
+  Three major direction changes confirmed and applied to PRODUCT_SPEC.md (v2.1)
+  and features.json (v2.0.0):
+
+  1. LAYOUT FLIP: AI chat becomes the main area (60-70% width), data panels
+     (Jobs, Pipeline, Profile) move to a collapsible right sidebar (30-40%).
+     - LAYOUT-1 marked as NEEDS REWORK (passes reset to false)
+     - New feature ARCH-1 added (P0) for the layout flip implementation
+     - Mobile: chat = full-screen default, data panels via bottom tabs
+
+  2. CONVERSATIONAL JOB CREATION: Form-based job creation abolished.
+     - B-3 (Quick-create modal) marked DEPRECATED — code to be removed
+     - A-5 (Agent-drafted JD) upgraded from P1 to P0, merged into FLOW-1
+     - New feature FLOW-1 added (P0): natural language → structured JD →
+       editable preview → confirm → auto-create. The ONLY job creation path.
+
+  3. EXTERNAL API INTEGRATION: Replace all mock data with real candidates.
+     - New feature FLOW-2 added (P0): Coresignal/Apollo.io API integration
+       for real candidate profile search
+     - New feature FLOW-3 added (P0): Agent structures raw API data,
+       performs multi-dimensional AI scoring, generates reasoning traces,
+       ranks candidates. Replaces mock scoring pipeline.
+
+  Impact on existing work:
+    - Phases 1-5 P0 features: most UI components still valid but layout must
+      be reworked (chat moves from left sidebar to center main area)
+    - B-3 (Quick-create modal): built but now deprecated, code to be removed
+    - Mock data layer (mock-jobs.ts, mock-candidates.ts): will be replaced by
+      real API data in FLOW-2/FLOW-3, but can serve as fallback during dev
+    - LAYOUT-1 passes reset to false — needs complete rework for layout flip
+
+  New priority counts: P0=17, P1=10, P2=11, deprecated=1 (B-3)
+
+==============================================================================
+PHASE 6: LAYOUT FLIP & CORE FLOWS (P0 — New Architecture)
+==============================================================================
+
+  [ ] ARCH-1  Layout flip (AI chat = main area, data panels = right sidebar)
+      - Rework AppShell: chat center 60-70%, right sidebar 30-40%
+      - Right sidebar tab switching: Jobs / Pipeline / Profile
+      - Collapse/expand right sidebar
+      - Remove old left-sidebar chat layout
+      - Update responsive breakpoints
+
+  [ ] FLOW-1  Conversational job creation
+      - Natural language → Agent extracts structured fields
+      - JD Preview Action Card (editable inline)
+      - Confirm → auto-create Job in pipeline
+      - Remove B-3 modal code
+      - '+New Job' button redirects to chat input
+
+  [ ] FLOW-2  External API integration (Coresignal/Apollo.io)
+      - API route for Coresignal/Apollo.io candidate search
+      - Agent constructs query from JD structured fields
+      - Real candidate profile retrieval
+      - Error handling, rate limiting, caching
+
+  [ ] FLOW-3  AI scoring & ranking (replaces mock data)
+      - Structure raw API candidate data
+      - Multi-dimensional AI scoring against JD
+      - Reasoning trace generation
+      - Ranked results in Pipeline panel
+      - Action Card summary in chat
+
+==============================================================================
+PHASE 7: P1 FEATURES (renumbered from Phase 6)
 ==============================================================================
 
   [ ] A-4  Conversational follow-up and refinement
-  [ ] A-5  Agent-drafted JD creation
+  [DEPRECATED] A-5  Agent-drafted JD creation → merged into FLOW-1 (P0), see Phase 6
   [ ] A-6  Chat message styling and distinction
-  [x] B-3  Quick-create job modal
-      - Radix UI Dialog-based modal triggered by "+ New Job" button on dashboard
-      - Form fields: Job Title (required), Department (dropdown), Seniority Level (dropdown), Description (optional textarea)
-      - Department options: Engineering, Design, Product, Marketing, Operations
-      - Seniority options: Junior, Mid, Senior, Lead, Principal
-      - Submitting adds new job (status: Draft) to Zustand dashboard store, prepended to job list
-      - Modal closes on submit, new job card appears immediately on dashboard
-      - Dashboard stats (Open Positions count) update reactively
-      - Visual: surface-secondary bg, border-default border, rgba(0,0,0,0.8) overlay
-      - Labels: 11px uppercase letter-spacing 0.08em (table-header style)
-      - Inputs: surface-primary bg, border-default border, 4px max border-radius
-      - Submit button: accent-primary pill-shaped, Cancel: ghost style
-      - Validation: title required, shows error state with signal-danger color
-      - data-testid attributes on modal, inputs, buttons for testing
+  [DEPRECATED] B-3  Quick-create job modal → replaced by FLOW-1 (P0), see Phase 6
+      - Previous implementation preserved in git history but code to be REMOVED
+      - Was: Radix UI Dialog-based modal triggered by "+ New Job" button
   [ ] B-4  Archive/close job
   [ ] B-5  Dashboard filtering by owner/department
   [ ] C-3  Bulk actions on candidates
@@ -251,7 +308,7 @@ PHASE 6: P1 FEATURES
   [ ] NAV-1 Quick-command suggestions in chat
 
 ==============================================================================
-PHASE 7: P2 — NON-FUNCTIONAL & POLISH
+PHASE 8: P2 — NON-FUNCTIONAL & POLISH (renumbered from Phase 7)
 ==============================================================================
 
   [ ] PERF-1  Dashboard render under 1.5 seconds

@@ -1,20 +1,21 @@
 {
   "meta": {
     "product": "HireWise",
-    "version": "1.0.0",
-    "generated": "2026-03-28",
-    "total_features": 35,
+    "version": "2.0.0",
+    "generated": "2026-03-29",
+    "total_features": 39,
     "priority_breakdown": {
-      "P0": 12,
-      "P1": 12,
-      "P2": 11
+      "P0": 17,
+      "P1": 10,
+      "P2": 11,
+      "deprecated": 1
     },
-    "note": "P0: 12 features, P1: 12 features, P2: 11 features (includes cross-platform mobile)"
+    "note": "v2.0 pivot: AI chat = main area, conversational job creation, external API integration. B-3 deprecated (replaced by FLOW-1). A-5 upgraded to P0 and merged into FLOW-1. Added ARCH-1, FLOW-1, FLOW-2, FLOW-3."
   },
   "features": [
     {
       "id": "A-1",
-      "module": "A: Agent Chat Sidebar",
+      "module": "A: Agent Chat (Main Area)",
       "name": "Natural language candidate search",
       "description": "HR can type a free-form recruiting directive (e.g., 'Find 50 senior Go engineers, US timezone') and the Agent initiates a search-and-score pipeline.",
       "priority": "P0",
@@ -30,7 +31,7 @@
     },
     {
       "id": "A-2",
-      "module": "A: Agent Chat Sidebar",
+      "module": "A: Agent Chat (Main Area)",
       "name": "Live progress ticker during Agent execution",
       "description": "While the Agent is searching and scoring, a segmented progress bar and real-time status text (e.g., 'Scoring 34/50...') are displayed in the chat thread.",
       "priority": "P0",
@@ -46,7 +47,7 @@
     },
     {
       "id": "A-3",
-      "module": "A: Agent Chat Sidebar",
+      "module": "A: Agent Chat (Main Area)",
       "name": "Structured Action Card output",
       "description": "Upon completing a task, the Agent renders a structured Action Card in the chat thread containing a result summary and actionable buttons (e.g., 'View Ranking').",
       "priority": "P0",
@@ -182,19 +183,22 @@
     {
       "id": "LAYOUT-1",
       "module": "Layout: App Shell",
-      "name": "Persistent chat sidebar with collapse",
-      "description": "The Agent chat sidebar is always present on the left side of the app shell. It can be collapsed to an icon strip on tablet breakpoints and is collapsible manually on desktop.",
+      "name": "Conversation-center layout with collapsible data sidebar [NEEDS REWORK]",
+      "description": "The AI Agent chat occupies the main area (60-70% width, center/left). Data panels (Jobs, Pipeline, Profile) live in a collapsible right-hand sidebar (30-40% width) with tab switching. This is a REWORK of the previous left-sidebar chat layout.",
       "priority": "P0",
-      "user_story": "As a Talent Lead, the Agent chat sidebar is always accessible on the left side of the screen, and I can collapse/expand it to manage screen space.",
+      "user_story": "As a Talent Lead, the AI chat is the primary workspace occupying the center of the screen. Structured data panels (Jobs, Pipeline, Candidate Profile) are accessible via a collapsible right sidebar with tab navigation.",
       "test_steps": [
-        "Load any page in the app.",
-        "Verify the chat sidebar is visible on the left.",
-        "Click the collapse toggle — verify the sidebar collapses to an icon strip.",
-        "Click again — verify it expands back.",
-        "Resize to tablet width (768-1279px) — verify sidebar auto-collapses to icon strip.",
-        "Resize below 768px — verify sidebar becomes the primary view with bottom nav for dashboard access."
+        "Load the app.",
+        "Verify the AI chat occupies the main area (60-70% of viewport width).",
+        "Verify a right sidebar is visible (30-40% width) with data panels.",
+        "Verify the right sidebar has tab switching (Jobs / Pipeline / Profile).",
+        "Click the collapse toggle on the right sidebar — verify it collapses and chat goes full-width.",
+        "Click again — verify the sidebar expands back.",
+        "Resize to tablet width (768-1279px) — verify right sidebar auto-collapses to icon strip.",
+        "Resize below 768px — verify chat is full-screen default, with bottom tabs for data panels."
       ],
-      "passes": true
+      "passes": false,
+      "rework_note": "Previous implementation had chat as left sidebar. Must be rebuilt with chat as main area and data panels as right sidebar. See ARCH-1 for the layout flip feature."
     },
     {
       "id": "LAYOUT-2",
@@ -216,7 +220,7 @@
     },
     {
       "id": "A-4",
-      "module": "A: Agent Chat Sidebar",
+      "module": "A: Agent Chat (Main Area)",
       "name": "Conversational follow-up and refinement",
       "description": "The Agent supports follow-up messages that refine previous results (e.g., 'Show only candidates with startup experience') without restarting the entire search pipeline.",
       "priority": "P1",
@@ -232,36 +236,39 @@
     },
     {
       "id": "A-5",
-      "module": "A: Agent Chat Sidebar",
-      "name": "Agent-drafted JD creation",
-      "description": "The Agent can draft a complete Job Description from a natural-language prompt, presenting it as editable structured output that can be pushed to the Job Dashboard.",
-      "priority": "P1",
-      "user_story": "As a Talent Lead, I can ask the Agent to draft a JD and it produces editable structured output that I can push to the Job Dashboard with one click.",
+      "module": "A: Agent Chat (Main Area)",
+      "name": "Agent-drafted JD creation (merged into FLOW-1)",
+      "description": "MERGED INTO FLOW-1. The Agent drafts a complete Job Description from natural-language input, presents it as an editable Action Card, and upon confirmation creates the Job automatically. This is the sole job creation path — no form, no modal.",
+      "priority": "P0",
+      "user_story": "As a Talent Lead, I describe a hiring need in natural language and the Agent extracts structured fields, generates a full JD preview, and — upon my confirmation — creates the Job and inserts it into the pipeline automatically. No form-filling required.",
       "test_steps": [
-        "Type 'Create a job for Senior Frontend Engineer' in the chat.",
-        "Verify the Agent generates a structured JD draft in the chat.",
-        "Verify the draft is editable (fields can be modified inline).",
-        "Click the 'Create Job' / 'Push to Dashboard' button.",
-        "Verify a new job card appears on /dashboard with the drafted content."
+        "Type a natural-language hiring request (e.g., 'Hire a 3-year energy storage sales rep in Mexico') in the main chat area.",
+        "Verify the Agent acknowledges and extracts structured fields (title, location, experience, industry, skills).",
+        "Verify a JD Preview Action Card appears in chat with editable fields.",
+        "Modify a field inline and verify the change persists.",
+        "Click 'Confirm & Create Job'.",
+        "Verify the new job appears in the right sidebar Jobs panel.",
+        "Verify no form or modal was used in the entire flow."
       ],
-      "passes": false
+      "passes": false,
+      "merged_into": "FLOW-1"
     },
     {
       "id": "B-3",
       "module": "B: Job Dashboard",
-      "name": "Quick-create job modal",
-      "description": "A modal accessible from the dashboard's '+ New Job' button allows rapid job creation with minimal required fields (title, department, seniority).",
-      "priority": "P1",
-      "user_story": "As a Talent Lead, I can create a new job directly from the dashboard via a quick-create modal without navigating away.",
+      "name": "Quick-create job modal [DEPRECATED]",
+      "description": "DEPRECATED — Replaced by conversational job creation (FLOW-1). The quick-create modal is removed. Job creation is now exclusively through the AI Agent chat. The '+ New Job' button in the sidebar Jobs panel should redirect focus to the chat input with a pre-filled prompt suggestion.",
+      "priority": "deprecated",
+      "user_story": "DEPRECATED. See FLOW-1 for the replacement flow.",
       "test_steps": [
-        "Navigate to /dashboard.",
-        "Click the '+ New Job' button.",
-        "Verify a modal appears with fields for job title, department, and seniority level.",
-        "Fill in the required fields and submit.",
-        "Verify the new job card appears on the dashboard immediately.",
-        "Verify the modal closes after successful creation."
+        "Navigate to the Jobs panel in the right sidebar.",
+        "Verify the '+ New Job' button does NOT open a modal.",
+        "Verify clicking '+ New Job' focuses the chat input with a suggested prompt (e.g., 'Describe the role you want to hire for...').",
+        "Verify no modal component is rendered anywhere in the job creation flow."
       ],
-      "passes": false
+      "passes": false,
+      "deprecated_reason": "Replaced by FLOW-1 (conversational job creation). Form-based job creation contradicts the conversation-first paradigm.",
+      "replaced_by": "FLOW-1"
     },
     {
       "id": "B-4",
@@ -384,7 +391,7 @@
     },
     {
       "id": "A-6",
-      "module": "A: Agent Chat Sidebar",
+      "module": "A: Agent Chat (Main Area)",
       "name": "Chat message styling and distinction",
       "description": "User messages use --accent-primary background with dark text. Agent messages use --surface-secondary background. No rounded speech-bubble tails — rectangular only.",
       "priority": "P1",
@@ -596,6 +603,91 @@
         "Navigate to /job/:id/pipeline and pull-to-refresh.",
         "Verify the candidate list refreshes with latest data.",
         "Verify the refresh indicator animation is smooth."
+      ],
+      "passes": false
+    },
+    {
+      "id": "ARCH-1",
+      "module": "Architecture: Layout Flip",
+      "name": "Layout flip — AI chat as main area, data panels as right sidebar",
+      "description": "Invert the current layout: AI Agent chat becomes the primary interaction surface occupying 60-70% of viewport width (center/left). Dashboard, Pipeline, and Candidate Profile become panels inside a collapsible right-hand sidebar (30-40% width) with tab switching between them. Mobile: chat is full-screen default, data panels via bottom tabs.",
+      "priority": "P0",
+      "user_story": "As a Talent Lead, the AI conversation is my primary workspace. I see the chat in the main area of the screen. I can reference Jobs, Pipeline, and Candidate data in a collapsible right sidebar without leaving the conversation.",
+      "test_steps": [
+        "Load the app on desktop (1280px+).",
+        "Verify the AI chat area occupies 60-70% of the viewport width.",
+        "Verify the right sidebar occupies 30-40% of the viewport width.",
+        "Verify the right sidebar has tab buttons for Jobs / Pipeline / Profile.",
+        "Click each tab — verify the corresponding data panel loads in the sidebar.",
+        "Click the sidebar collapse toggle — verify the sidebar hides and chat expands to full width.",
+        "Click again — verify the sidebar re-expands.",
+        "Resize to tablet (768-1279px) — verify the sidebar collapses to an icon strip.",
+        "Resize to mobile (<768px) — verify chat is full-screen with bottom tab navigation for data panels.",
+        "Verify the previous left-sidebar chat layout is completely removed."
+      ],
+      "passes": false
+    },
+    {
+      "id": "FLOW-1",
+      "module": "Flow: Conversational Job Creation",
+      "name": "Conversational job creation — natural language to structured JD to auto-create",
+      "description": "HR describes a hiring need in natural language (e.g., 'Hire a 3-year energy storage sales rep in Mexico'). The Agent extracts structured fields (title, location, experience level, industry, required skills), generates a full JD preview as an editable Action Card in the chat, and upon user confirmation, auto-creates the Job and inserts it into the Pipeline. Replaces the deprecated B-3 quick-create modal. This is the ONLY job creation path.",
+      "priority": "P0",
+      "user_story": "As a Talent Lead, I describe what I need to hire in plain language. The Agent understands my intent, structures it into a proper JD, shows me a preview I can edit, and creates the job when I confirm. No forms, no modals.",
+      "test_steps": [
+        "Type a natural-language hiring request in the chat (e.g., 'I need to hire a senior Go engineer in Berlin with 5 years experience').",
+        "Verify the Agent acknowledges and shows a progress indicator while processing.",
+        "Verify the Agent presents a JD Preview Action Card containing: extracted title, location, experience level, skills, and a generated job description.",
+        "Verify the JD Preview fields are editable inline.",
+        "Modify the title field and verify the change persists in the preview.",
+        "Click 'Confirm & Create Job'.",
+        "Verify the job appears in the right sidebar Jobs panel with status 'Draft'.",
+        "Verify a confirmation message appears in chat with a link to the new job.",
+        "Verify no modal or form was used at any point.",
+        "Try creating another job via chat — verify the flow is repeatable."
+      ],
+      "passes": false,
+      "replaces": ["B-3", "A-5"]
+    },
+    {
+      "id": "FLOW-2",
+      "module": "Flow: External API Integration",
+      "name": "External API integration — Coresignal/Apollo.io real candidate search",
+      "description": "Integrate Coresignal (primary) or Apollo.io (alternative) APIs to search for real candidate profiles based on structured JD parameters. The Agent constructs API queries from JD fields (title, skills, experience, location, industry), executes the search, and retrieves real professional profiles. Replaces all mock candidate data in the sourcing pipeline.",
+      "priority": "P0",
+      "user_story": "As a Talent Lead, when I ask the Agent to find candidates for a job, it searches real professional databases (Coresignal/Apollo.io) and returns actual candidate profiles — not mock data.",
+      "test_steps": [
+        "Create a job via conversational flow (FLOW-1).",
+        "Ask the Agent to find candidates for the job (e.g., 'Find candidates for this role').",
+        "Verify the Agent constructs search parameters from the JD (visible in progress updates).",
+        "Verify the Agent calls the external API (Coresignal or Apollo.io).",
+        "Verify real candidate profiles are returned (not mock/seed data).",
+        "Verify candidate data includes: name, work history, education, skills, location.",
+        "Verify API errors are handled gracefully (show cached results or informative error message).",
+        "Verify API keys are not exposed in the client-side network tab.",
+        "Verify rate limiting is respected (no excessive API calls for the same query)."
+      ],
+      "passes": false
+    },
+    {
+      "id": "FLOW-3",
+      "module": "Flow: AI Scoring & Ranking",
+      "name": "Agent resume structuring + AI scoring and ranking (replaces mock data)",
+      "description": "The Agent takes raw candidate profiles from external APIs, normalizes them into HireWise's internal Candidate schema, performs multi-dimensional AI scoring (Technical Fit, Culture Fit, Experience Depth, Leadership Potential) against the JD, generates plain-language reasoning traces for each score, and presents ranked results in the Pipeline panel. Fully replaces the current mock scoring system.",
+      "priority": "P0",
+      "user_story": "As a Talent Lead, after the Agent retrieves real candidates, it automatically structures their data, scores them against the JD with transparent reasoning, and presents a ranked list I can act on immediately.",
+      "test_steps": [
+        "After FLOW-2 retrieves real candidates, verify the Agent structures raw API data into normalized profiles.",
+        "Verify each candidate has: structured work history, education, skills list, location.",
+        "Verify AI scoring runs automatically after structuring.",
+        "Verify each candidate receives an overall match score (0-100).",
+        "Verify per-dimension scores are generated: Technical Fit, Culture Fit, Experience Depth, Leadership Potential.",
+        "Verify plain-language reasoning is generated for each dimension score.",
+        "Verify skill gaps are identified and listed.",
+        "Verify candidates are ranked by overall score descending in the Pipeline panel.",
+        "Verify the Pipeline panel in the right sidebar updates with real scored candidates.",
+        "Verify an Action Card summary appears in chat (e.g., '25 candidates found, 8 scored above 85%').",
+        "Verify no mock data is used anywhere in the scoring pipeline."
       ],
       "passes": false
     }
