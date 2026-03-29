@@ -4,13 +4,14 @@ import Link from "next/link";
 import { ArrowLeft, Users } from "@phosphor-icons/react";
 import { MOCK_JOBS } from "@/data/mock-jobs";
 import { JDContextRail } from "@/components/jd-context-rail";
+import { CandidateRankedList } from "@/components/candidate-ranked-list";
 
 /**
  * PipelineView — Client component for the /job/:id/pipeline page.
  *
  * Layout:
  * - Left rail: JD context tags (C-1)
- * - Main panel: Candidate ranked list placeholder (C-2 will fill this)
+ * - Main panel: Candidate ranked list with scores (C-2)
  *
  * The left rail uses sticky/fixed height so it stays visible
  * while the candidate list scrolls.
@@ -92,18 +93,12 @@ export function PipelineView({ jobId }: PipelineViewProps) {
           </aside>
         )}
 
-        {/* Main panel — candidate list placeholder (C-2) */}
+        {/* Main panel — candidate ranked list (C-2) */}
         <div
-          className="flex-1 overflow-y-auto"
+          className="flex-1 overflow-hidden"
           data-testid="candidate-list-panel"
         >
-          <div className="flex-1 flex items-center justify-center h-full">
-            <div className="text-center">
-              <p className="text-text-muted text-sm font-mono">
-                Candidate ranking list — coming in C-2
-              </p>
-            </div>
-          </div>
+          <CandidateRankedList jobId={job.id} />
         </div>
       </div>
     </div>
