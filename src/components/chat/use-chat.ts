@@ -300,7 +300,12 @@ function extractJDFromText(text: string): JDPreviewData {
   // 5. Extract skills
   const skills: string[] = [];
   for (const skill of KNOWN_SKILLS) {
-    if (lower.includes(skill.toLowerCase()) || text.includes(skill)) {
+    // For short skills (1-2 chars like "R", "C#"), use word boundary matching to avoid false positives
+    const skillLower = skill.toLowerCase();
+    const matched = skill.length <= 2
+      ? new RegExp(`\\b${skill.replace(/[+#]/g, '\\$&')}\\b`, 'i').test(text)
+      : (lower.includes(skillLower) || text.includes(skill));
+    if (matched) {
       // Normalize K8s → Kubernetes
       if (skill === "K8s" && !skills.includes("Kubernetes")) {
         skills.push("Kubernetes");
