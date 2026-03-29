@@ -194,7 +194,7 @@
         "Resize to tablet width (768-1279px) — verify sidebar auto-collapses to icon strip.",
         "Resize below 768px — verify sidebar becomes the primary view with bottom nav for dashboard access."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "LAYOUT-2",

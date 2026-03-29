@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-29
-Phase: 1 — App Shell & Design System (LAYOUT-2 complete, LAYOUT-1 next)
+Phase: 2 — Job Dashboard (LAYOUT-1 & LAYOUT-2 complete, B-1 next)
 
 ==============================================================================
 PHASE 0: PLANNING & SPECIFICATION
@@ -28,10 +28,17 @@ PHASE 1: APP SHELL & DESIGN SYSTEM (P0 — Layout)
       - Dashboard page with demo job cards to showcase design system
       - AppShell component with sidebar placeholder + mobile bottom nav
 
-  [ ] LAYOUT-1  Persistent chat sidebar with collapse
-      - App shell layout: sidebar + main content area
-      - Sidebar collapse/expand toggle
-      - Responsive behavior (tablet icon-strip, mobile chat-only)
+  [x] LAYOUT-1  Persistent chat sidebar with collapse
+      - ChatSidebar component with expand/collapse toggle (Zustand store)
+      - Expanded view: chat message list, input field, send button
+      - Collapsed view: icon strip with chat icon
+      - useMediaQuery hook for responsive breakpoints
+      - Tablet (768-1279px): auto-collapses to icon strip
+      - Desktop (1280px+): auto-expands, manually collapsible
+      - Mobile (<768px): full-screen chat as primary tab, bottom nav for dashboard/pipeline
+      - MobileChatView component for mobile full-screen chat
+      - Chat bubbles: user #D4FF00 bg, agent #1A1A1A bg, rectangular (max 4px radius)
+      - Simulated agent responses for demo/testing
 
 ==============================================================================
 PHASE 2: JOB DASHBOARD — MODULE B (P0)
