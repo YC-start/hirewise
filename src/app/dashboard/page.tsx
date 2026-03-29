@@ -11,11 +11,11 @@ import {
 } from "@phosphor-icons/react";
 import { useDashboardStore } from "@/stores/dashboard-store";
 import {
-  MOCK_JOBS,
   computeStats,
   STATUS_BADGE_STYLES,
   type Job,
 } from "@/data/mock-jobs";
+import { QuickCreateJobModal } from "@/components/quick-create-job-modal";
 
 /**
  * Dashboard page — Job card grid / list view (B-1 + B-2).
@@ -27,18 +27,15 @@ import {
  * - Status badges: Active=#D4FF00, Draft=#888888, Paused=#FFB800, Closed=#FF4444
  * - "Industrial Clarity" design: dark surfaces, dense layout, no gradients/shadows
  * - Each card/row links to /job/[id]/pipeline
- * - "+ New Job" pill-shaped CTA with placeholder alert
+ * - "+ New Job" pill-shaped CTA opens quick-create job modal (B-3)
+ * - Quick-create modal: Radix Dialog, title/department/seniority/description fields
  */
 
 // ── Page Component ─────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const { viewMode, setViewMode } = useDashboardStore();
-  const stats = computeStats(MOCK_JOBS);
-
-  const handleNewJob = () => {
-    alert("Coming soon — the quick-create job modal will be available in a future update (B-3).");
-  };
+  const { viewMode, setViewMode, jobs, openCreateModal } = useDashboardStore();
+  const stats = computeStats(jobs);
 
   return (
     <div className="flex-1 overflow-y-auto pb-16 md:pb-0">
@@ -51,8 +48,9 @@ export default function DashboardPage() {
           {/* View toggle */}
           <ViewToggle viewMode={viewMode} onChange={setViewMode} />
           <button
-            onClick={handleNewJob}
+            onClick={openCreateModal}
             className="flex items-center gap-2 px-4 py-1.5 bg-accent-primary text-surface-primary font-heading text-sm font-700 rounded-full hover:opacity-90 transition-opacity"
+            data-testid="new-job-btn"
           >
             + New Job
           </button>
@@ -92,16 +90,19 @@ export default function DashboardPage() {
             className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"
             data-testid="job-grid-view"
           >
-            {MOCK_JOBS.map((job) => (
+            {jobs.map((job) => (
               <JobCard key={job.id} job={job} />
             ))}
           </div>
         ) : (
           <div data-testid="job-list-view">
-            <JobListView jobs={MOCK_JOBS} />
+            <JobListView jobs={jobs} />
           </div>
         )}
       </div>
+
+      {/* Quick-create job modal (B-3) */}
+      <QuickCreateJobModal />
     </div>
   );
 }

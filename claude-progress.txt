@@ -227,7 +227,20 @@ PHASE 6: P1 FEATURES
   [ ] A-4  Conversational follow-up and refinement
   [ ] A-5  Agent-drafted JD creation
   [ ] A-6  Chat message styling and distinction
-  [ ] B-3  Quick-create job modal
+  [x] B-3  Quick-create job modal
+      - Radix UI Dialog-based modal triggered by "+ New Job" button on dashboard
+      - Form fields: Job Title (required), Department (dropdown), Seniority Level (dropdown), Description (optional textarea)
+      - Department options: Engineering, Design, Product, Marketing, Operations
+      - Seniority options: Junior, Mid, Senior, Lead, Principal
+      - Submitting adds new job (status: Draft) to Zustand dashboard store, prepended to job list
+      - Modal closes on submit, new job card appears immediately on dashboard
+      - Dashboard stats (Open Positions count) update reactively
+      - Visual: surface-secondary bg, border-default border, rgba(0,0,0,0.8) overlay
+      - Labels: 11px uppercase letter-spacing 0.08em (table-header style)
+      - Inputs: surface-primary bg, border-default border, 4px max border-radius
+      - Submit button: accent-primary pill-shaped, Cancel: ghost style
+      - Validation: title required, shows error state with signal-danger color
+      - data-testid attributes on modal, inputs, buttons for testing
   [ ] B-4  Archive/close job
   [ ] B-5  Dashboard filtering by owner/department
   [ ] C-3  Bulk actions on candidates
