@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-29
-Phase: 3 — Candidate Ranking View (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2 complete, D-1 next)
+Phase: 4 — Candidate Profile (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1 complete, D-2 next)
 
 ==============================================================================
 PHASE 0: PLANNING & SPECIFICATION
@@ -111,9 +111,26 @@ PHASE 3: CANDIDATE RANKING VIEW — MODULE C (P0)
 PHASE 4: CANDIDATE PROFILE — MODULE D (P0)
 ==============================================================================
 
-  [ ] D-1  Resume inline preview
-      - /job/:id/candidate/:cid route
-      - PDF embed or structured timeline
+  [x] D-1  Resume inline preview (structured timeline)
+      - Extended Candidate interface with Experience[], Education[], certifications[], pipelineStatus
+      - Added structured resume data for all 65+ candidates across 6 jobs
+      - getCandidateById() helper function added to mock-candidates.ts
+      - CandidateProfile client component (src/components/candidate-profile.tsx)
+      - Candidate header: name, pipeline status badge (color-coded), AI match score (36px Space Grotesk)
+      - Score bar: full-width flat horizontal bar, color-coded by range (high/mid/low)
+      - Sub-scores row: Technical Fit, Culture Fit, Experience Depth
+      - Skill tags: accent-primary border, monospace font
+      - Structured timeline for Work Experience:
+        - Left vertical line (border-default), square nodes (accent-primary 9x9px)
+        - Content cards: surface-secondary bg, border-default border, max 4px radius
+        - Period text in JetBrains Mono, role + company + description
+        - Entries in reverse chronological order
+      - Education section: same timeline style, accent-secondary square nodes
+      - Certifications section: same timeline style, signal-warning square nodes
+      - Section headers: table-header style (11px uppercase letter-spacing 0.08em)
+      - Back to Pipeline link with job title breadcrumb
+      - Graceful not-found fallback for invalid candidate IDs
+      - data-testid attributes on all key elements
 
   [ ] D-2  AI Evaluation Report display
       - Score breakdown by dimension
