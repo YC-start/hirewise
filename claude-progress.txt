@@ -261,12 +261,38 @@ PRODUCT DIRECTION PIVOT — 2026-03-29
 PHASE 6: LAYOUT FLIP & CORE FLOWS (P0 — New Architecture)
 ==============================================================================
 
-  [ ] ARCH-1  Layout flip (AI chat = main area, data panels = right sidebar)
-      - Rework AppShell: chat center 60-70%, right sidebar 30-40%
-      - Right sidebar tab switching: Jobs / Pipeline / Profile
-      - Collapse/expand right sidebar
-      - Remove old left-sidebar chat layout
-      - Update responsive breakpoints
+  [x] ARCH-1  Layout flip (AI chat = main area, data panels = right sidebar)
+      - Rewrote AppShell: ChatMainArea center (~60-65%), DataPanelSidebar right (~35-40%)
+      - ChatMainArea component (src/components/chat-main-area.tsx):
+        - Full conversation flow: chat bubbles, progress indicators, action cards
+        - Input bar fixed at bottom with surface-secondary bg
+        - Conversation centered with max-width 800px
+        - Quick-command suggestions in empty state
+        - surface-primary (#0D0D0D) background
+      - DataPanelSidebar component (src/components/data-panel-sidebar.tsx):
+        - Three tabs: Jobs / Pipeline / Profile with underline indicator
+        - Collapsible to icon strip (56px) with tab icons
+        - surface-secondary (#1A1A1A) bg, left 1px border-default separator
+        - Auto-collapse on tablet, auto-expand on desktop
+      - Panel content components (src/components/panels/):
+        - jobs-panel.tsx: Compact job card grid/list, stats, view toggle
+        - pipeline-panel.tsx: Candidate ranking for selected job, compact JD tags
+        - profile-panel.tsx: Candidate detail with score, actions, AI eval, timeline
+      - Data panel state store (src/stores/data-panel-store.ts):
+        - Zustand store: activeTab, selectedJobId, selectedCandidateId
+        - selectJob() switches to pipeline tab, selectCandidate() to profile tab
+        - backToJobs() and backToPipeline() navigation
+      - Route pages updated for new layout:
+        - /dashboard page renders null (AppShell handles layout)
+        - /job/[id]/pipeline triggers data panel pipeline tab via useEffect
+        - /job/[id]/candidate/[cid] triggers data panel profile tab via useEffect
+      - CSS variable --data-panel-width: min(480px, 38vw) for responsive width
+      - Mobile (<768px): Chat full-screen default, bottom nav for Jobs/Pipeline tabs
+        - Jobs tab renders JobsPanelContent directly
+        - Pipeline tab renders PipelinePanelContent directly
+      - Preserved all existing components (ChatBubble, ActionCard, ProgressIndicator)
+      - Preserved existing mock data layer (mock-jobs.ts, mock-candidates.ts)
+      - npm run build passes cleanly
 
   [ ] FLOW-1  Conversational job creation
       - Natural language → Agent extracts structured fields
