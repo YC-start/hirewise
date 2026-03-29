@@ -1,26 +1,181 @@
 @import "tailwindcss";
 
+/* ========================================================================
+   HireWise — "Industrial Clarity" Design System
+   Bloomberg Terminal meets Dieter Rams: dense, dark, zero decoration.
+   ======================================================================== */
+
+/* --- Design Tokens (CSS Custom Properties) --- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surface */
+  --surface-primary: #0D0D0D;
+  --surface-secondary: #1A1A1A;
+  --surface-tertiary: #262626;
+
+  /* Borders */
+  --border-default: #333333;
+
+  /* Text */
+  --text-primary: #E8E8E8;
+  --text-secondary: #888888;
+  --text-muted: #555555;
+
+  /* Accent */
+  --accent-primary: #D4FF00;
+  --accent-secondary: #00D4AA;
+
+  /* Signal */
+  --signal-danger: #FF4444;
+  --signal-warning: #FFB800;
+
+  /* Score gradient */
+  --score-gradient-high: #D4FF00;
+  --score-gradient-mid: #FFB800;
+  --score-gradient-low: #FF4444;
+
+  /* Typography sizes */
+  --text-h1: 28px;
+  --text-h2: 22px;
+  --text-h3: 18px;
+  --text-body: 14px;
+  --text-body-sm: 13px;
+  --text-mono: 14px;
+  --text-score-lg: 36px;
+  --text-table-header: 11px;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+
+  /* Component */
+  --radius-default: 2px;
+  --radius-max: 4px;
+  --row-height: 42px;
+  --sidebar-width: 380px;
+  --sidebar-collapsed-width: 56px;
+
+  /* Fonts (set by next/font via CSS variables) */
+  --font-heading: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  --font-body: var(--font-inter), "Inter", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
 }
 
+/* --- Register tokens in Tailwind v4 theme --- */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface-primary: var(--surface-primary);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-tertiary: var(--surface-tertiary);
+  --color-border-default: var(--border-default);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-signal-danger: var(--signal-danger);
+  --color-signal-warning: var(--signal-warning);
+  --color-score-high: var(--score-gradient-high);
+  --color-score-mid: var(--score-gradient-mid);
+  --color-score-low: var(--score-gradient-low);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-heading);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* --- Base / Reset --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  background-color: var(--surface-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: 1.5;
+}
+
+/* --- Typography --- */
+h1, h2, h3 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+h1 { font-size: var(--text-h1); }
+h2 { font-size: var(--text-h2); }
+h3 { font-size: var(--text-h3); }
+
+/* --- Scrollbar (dark theme) --- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* --- Selection --- */
+::selection {
+  background: var(--accent-primary);
+  color: var(--surface-primary);
+}
+
+/* --- Focus visible (accessibility) --- */
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* --- Utility classes for the design system --- */
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.text-score-lg {
+  font-family: var(--font-heading);
+  font-size: var(--text-score-lg);
+  font-weight: 700;
+}
+
+.table-header {
+  font-size: var(--text-table-header);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }

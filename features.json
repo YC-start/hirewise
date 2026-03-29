@@ -212,7 +212,7 @@
         "Verify at least one primary CTA button uses --accent-primary (#D4FF00) background.",
         "Verify card components use --surface-secondary (#1A1A1A) background with --border-default (#333333) border."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "A-4",
