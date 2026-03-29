@@ -667,7 +667,7 @@
         "Verify API keys are not exposed in the client-side network tab.",
         "Verify rate limiting is respected (no excessive API calls for the same query)."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "FLOW-3",
