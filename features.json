@@ -26,7 +26,7 @@
         "Verify the Agent acknowledges the request and begins processing.",
         "Verify that candidates begin appearing in the associated job's pipeline within a reasonable timeframe."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "A-2",
@@ -42,7 +42,7 @@
         "Verify the progress bar segments fill sequentially as steps complete.",
         "Verify text is rendered in monospace font (JetBrains Mono)."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "A-3",
@@ -58,7 +58,7 @@
         "Click the 'View Ranking' button on the card.",
         "Verify navigation to the correct job's /job/:id/pipeline page."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "B-1",
@@ -160,7 +160,7 @@
         "Verify plain-language reasoning text is displayed explaining the score.",
         "Verify skill gaps are explicitly listed."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "D-4",
@@ -177,7 +177,7 @@
         "Verify the Ranking View reflects the new status.",
         "Test 'Reject' action — verify status updates and destructive styling (--signal-danger)."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "LAYOUT-1",
