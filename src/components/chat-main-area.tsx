@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { PaperPlaneRight, Lightning } from "@phosphor-icons/react";
-import { ChatBubble, ProgressIndicator, ActionCard, useChat } from "@/components/chat";
+import { ChatBubble, ProgressIndicator, ActionCard, JDPreviewCard, useChat } from "@/components/chat";
 
 /**
  * ChatMainArea — The primary AI conversation surface (center of the layout).
@@ -17,13 +17,13 @@ import { ChatBubble, ProgressIndicator, ActionCard, useChat } from "@/components
  */
 
 const QUICK_COMMANDS = [
+  { label: "Create a new job", prompt: "I need to hire a senior Go backend engineer in Berlin, 5+ years experience, must know Kubernetes" },
   { label: "Find senior engineers", prompt: "Find me 50 senior backend engineers with Go + Kubernetes experience" },
   { label: "Search designers", prompt: "Search for product designers with Figma and design systems experience" },
-  { label: "Source data scientists", prompt: "Look for data scientists with Python and machine learning skills" },
 ];
 
 export function ChatMainArea() {
-  const { messages, handleSend } = useChat();
+  const { messages, handleSend, handleJDConfirm, handleJDModify } = useChat();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -76,6 +76,13 @@ export function ChatMainArea() {
               <ProgressIndicator key={msg.id} progress={msg.progress} />
             ) : msg.type === "action-card" && msg.actionCard ? (
               <ActionCard key={msg.id} data={msg.actionCard} />
+            ) : msg.type === "jd-preview" && msg.jdPreview ? (
+              <JDPreviewCard
+                key={msg.id}
+                data={msg.jdPreview}
+                onConfirm={handleJDConfirm}
+                onModify={handleJDModify}
+              />
             ) : (
               <ChatBubble key={msg.id} message={msg} />
             ),

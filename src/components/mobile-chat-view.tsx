@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { PaperPlaneRight } from "@phosphor-icons/react";
-import { ChatBubble, ProgressIndicator, ActionCard, useChat } from "@/components/chat";
+import { ChatBubble, ProgressIndicator, ActionCard, JDPreviewCard, useChat } from "@/components/chat";
 
 /**
  * MobileChatView — Full-screen chat interface for mobile (<768px).
@@ -11,7 +11,7 @@ import { ChatBubble, ProgressIndicator, ActionCard, useChat } from "@/components
  * across tab switches (unmount/remount).
  */
 export function MobileChatView() {
-  const { messages, handleSend } = useChat();
+  const { messages, handleSend, handleJDConfirm, handleJDModify } = useChat();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -53,6 +53,13 @@ export function MobileChatView() {
             <ProgressIndicator key={msg.id} progress={msg.progress} />
           ) : msg.type === "action-card" && msg.actionCard ? (
             <ActionCard key={msg.id} data={msg.actionCard} />
+          ) : msg.type === "jd-preview" && msg.jdPreview ? (
+            <JDPreviewCard
+              key={msg.id}
+              data={msg.jdPreview}
+              onConfirm={handleJDConfirm}
+              onModify={handleJDModify}
+            />
           ) : (
             <ChatBubble key={msg.id} message={msg} />
           ),

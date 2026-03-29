@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-29
-Phase: PIVOT — Product Direction Reset (v2.1 Spec)
+Phase: Phase 6 — Layout Flip & Core Flows (ARCH-1 complete, FLOW-1 complete)
 Previous phase completed: Phase 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4, A-2, A-3, A-1 complete)
 
 ==============================================================================
@@ -294,12 +294,44 @@ PHASE 6: LAYOUT FLIP & CORE FLOWS (P0 — New Architecture)
       - Preserved existing mock data layer (mock-jobs.ts, mock-candidates.ts)
       - npm run build passes cleanly
 
-  [ ] FLOW-1  Conversational job creation
-      - Natural language → Agent extracts structured fields
-      - JD Preview Action Card (editable inline)
-      - Confirm → auto-create Job in pipeline
-      - Remove B-3 modal code
-      - '+New Job' button redirects to chat input
+  [x] FLOW-1  Conversational job creation
+      - Two-flow intent detection in use-chat.ts:
+        1. Job creation intent: regex patterns for EN + ZH (hire, recruit, need, 招, 聘, etc.)
+        2. Search intent: existing keyword matching (deprioritized when creation detected)
+      - JD extraction engine (client-side mock, will be replaced by LLM):
+        - Role/title: 40+ keyword mappings (EN + ZH) → title + department
+        - Seniority: 12 levels (junior → C-level, 初级 → 总监)
+        - Experience: regex extraction for "N years" / "N年经验"
+        - Location: pattern matching + 60+ known cities/countries (EN + ZH)
+        - Skills: 80+ known tech/industry skills (Go, K8s, 储能, 光伏, etc.)
+        - Description: auto-generated from extracted fields
+      - JDPreviewCard component (src/components/chat/jd-preview-card.tsx):
+        - Left border: 4px accent-primary (#D4FF00) — distinct from ActionCard
+        - Background: surface-tertiary (#262626)
+        - Structured data grid: Position, Department, Location, Experience, Seniority, Skills
+        - Labels: table-header style (11px uppercase mono, 0.08em tracking)
+        - Skill tags: accent-primary border, mono font
+        - Description section: editable textarea in edit mode
+        - Two buttons: [Confirm & Create Job] pill-shaped accent-primary, [Modify] ghost
+        - Inline editing: all fields become editable inputs when Modify clicked
+        - Post-confirm state: collapsed confirmation card with checkmark
+      - JDPreviewData interface in chat-types.ts:
+        - title, department, location, experience, skills[], description, seniority
+      - ChatMessage type extended with "jd-preview" type + jdPreview field
+      - use-chat.ts handleJDConfirm callback:
+        - Creates Job object with extracted JD data (status: Draft)
+        - Adds to dashboard-store via addJob()
+        - Opens data panel sidebar to show new job
+        - Posts confirmation message + follow-up "Want me to search candidates?"
+      - chat-main-area.tsx + mobile-chat-view.tsx: render JDPreviewCard
+      - Chat flow: user message → ack → progress (2 steps) → JD preview card
+      - "+" New Job" button in jobs-panel.tsx: now focuses chat input
+        (no longer opens deprecated B-3 modal), adds ChatCircleDots icon
+      - QuickCreateJobModal removed from app-shell.tsx (B-3 deprecated)
+      - Quick command suggestions updated: added "Create a new job" option
+      - Exported JDPreviewCard + JDPreviewData from chat/index.ts
+      - npm run build passes cleanly
+      - data-testid attributes on all key elements
 
   [ ] FLOW-2  External API integration (Coresignal/Apollo.io)
       - API route for Coresignal/Apollo.io candidate search

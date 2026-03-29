@@ -38,18 +38,38 @@ export interface ActionCardData {
   actionHref: string;
 }
 
+/** Structured JD data extracted from natural language. */
+export interface JDPreviewData {
+  /** Job title (agent-inferred) */
+  title: string;
+  /** Department (agent-inferred) */
+  department: string;
+  /** Work location */
+  location: string;
+  /** Experience requirement, e.g., "3+ years" */
+  experience: string;
+  /** Key skills / industry requirements */
+  skills: string[];
+  /** Generated job description summary */
+  description: string;
+  /** Seniority level, e.g., "Senior", "Mid", "Lead" */
+  seniority: string;
+}
+
 /** Shared chat message interface used by both desktop and mobile chat views. */
 export interface ChatMessage {
   id: string;
   role: "user" | "agent";
   content: string;
   timestamp: Date;
-  /** Message type determines rendering: text bubble, progress indicator, or action card. */
-  type?: "text" | "progress" | "action-card";
+  /** Message type determines rendering: text bubble, progress indicator, action card, or JD preview. */
+  type?: "text" | "progress" | "action-card" | "jd-preview";
   /** Progress state — only present when type === "progress". */
   progress?: ProgressState;
   /** Action card data — only present when type === "action-card". */
   actionCard?: ActionCardData;
+  /** JD preview data — only present when type === "jd-preview". */
+  jdPreview?: JDPreviewData;
 }
 
 /** Welcome message shown when chat is first loaded. */

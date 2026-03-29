@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
-import { ChatCircleDots, Briefcase, Funnel, UserCircle } from "@phosphor-icons/react";
+import { ChatCircleDots, Briefcase, Funnel } from "@phosphor-icons/react";
 import { useSidebarStore } from "@/stores/sidebar-store";
-import { useDataPanelStore, type DataPanelTab } from "@/stores/data-panel-store";
+
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { ChatMainArea } from "@/components/chat-main-area";
 import { DataPanelSidebar } from "@/components/data-panel-sidebar";
 import { MobileChatView } from "@/components/mobile-chat-view";
 import { JobsPanelContent } from "@/components/panels/jobs-panel";
 import { PipelinePanelContent } from "@/components/panels/pipeline-panel";
-import { ProfilePanelContent } from "@/components/panels/profile-panel";
-import { QuickCreateJobModal } from "@/components/quick-create-job-modal";
+
+// QuickCreateJobModal removed — B-3 deprecated, replaced by FLOW-1 (conversational job creation)
 
 /**
  * AppShell — Main layout wrapper (ARCH-1: Layout Flip).
@@ -27,7 +26,6 @@ import { QuickCreateJobModal } from "@/components/quick-create-job-modal";
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { mobileActiveTab, setMobileActiveTab } = useSidebarStore();
-  const { activeTab, setActiveTab } = useDataPanelStore();
 
   // Responsive breakpoints
   const isMobile = useMediaQuery("(max-width: 767px)");
@@ -57,8 +55,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           onTabChange={setMobileActiveTab}
         />
 
-        {/* Quick-create modal */}
-        <QuickCreateJobModal />
+        {/* B-3 modal removed — job creation is now conversational (FLOW-1) */}
       </div>
     );
   }
@@ -72,8 +69,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Data Panel — Right Sidebar (~35-40%) */}
       <DataPanelSidebar />
 
-      {/* Quick-create modal */}
-      <QuickCreateJobModal />
+      {/* B-3 modal removed — job creation is now conversational (FLOW-1) */}
     </div>
   );
 }

@@ -7,9 +7,11 @@ import {
   CalendarCheck,
   SquaresFour,
   ListBullets,
+  ChatCircleDots,
 } from "@phosphor-icons/react";
 import { useDashboardStore } from "@/stores/dashboard-store";
 import { useDataPanelStore } from "@/stores/data-panel-store";
+import { useSidebarStore } from "@/stores/sidebar-store";
 import {
   computeStats,
   STATUS_BADGE_STYLES,
@@ -22,11 +24,32 @@ import {
  * Reuses the same data and logic from the original dashboard page,
  * adapted to fit within the sidebar width (~35-40%).
  * Clicking a job card navigates to the Pipeline tab in the sidebar.
+ *
+ * FLOW-1: The "+ New Job" button now focuses the chat input with a suggested
+ * prompt instead of opening the deprecated B-3 modal. On mobile, it switches
+ * to the chat tab.
  */
 export function JobsPanelContent() {
-  const { viewMode, setViewMode, jobs, openCreateModal } = useDashboardStore();
+  const { viewMode, setViewMode, jobs } = useDashboardStore();
   const { selectJob } = useDataPanelStore();
+  const { setMobileActiveTab } = useSidebarStore();
   const stats = computeStats(jobs);
+
+  const handleNewJob = () => {
+    // On mobile, switch to chat tab
+    setMobileActiveTab("chat");
+    // Focus the chat input — small delay to let the DOM update on mobile tab switch
+    setTimeout(() => {
+      const chatInput = document.querySelector<HTMLInputElement>(
+        '[data-testid="chat-input"], [data-testid="mobile-chat-input"]',
+      );
+      if (chatInput) {
+        chatInput.focus();
+        chatInput.placeholder =
+          "Describe the role you want to hire for...";
+      }
+    }, 100);
+  };
 
   return (
     <div className="flex flex-col h-full overflow-hidden" data-testid="jobs-panel">
@@ -38,10 +61,11 @@ export function JobsPanelContent() {
         <div className="flex items-center gap-2">
           <ViewToggle viewMode={viewMode} onChange={setViewMode} />
           <button
-            onClick={openCreateModal}
+            onClick={handleNewJob}
             className="flex items-center gap-1 px-3 py-1 bg-accent-primary text-surface-primary font-heading text-[11px] font-700 rounded-full hover:opacity-90 transition-opacity"
             data-testid="new-job-btn"
           >
+            <ChatCircleDots size={12} weight="bold" />
             + New Job
           </button>
         </div>
