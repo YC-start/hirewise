@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { ArrowLeft } from "@phosphor-icons/react";
 import { useDataPanelStore } from "@/stores/data-panel-store";
+import { useDashboardStore } from "@/stores/dashboard-store";
+import { useCandidateStore } from "@/stores/candidate-store";
 import { getCandidateById } from "@/data/mock-candidates";
-import { MOCK_JOBS } from "@/data/mock-jobs";
 import type { PipelineStatus, AIEvaluation, DimensionScore } from "@/data/mock-candidates";
 
 /**
@@ -108,8 +109,12 @@ export function ProfilePanelContent() {
     );
   }
 
-  const candidate = getCandidateById(selectedJobId, selectedCandidateId);
-  const job = MOCK_JOBS.find((j) => j.id === selectedJobId);
+  // Check candidate store (API results) first, then fall back to mock data
+  const apiCandidates = useCandidateStore((s) => s.candidatesByJob[selectedJobId] || []);
+  const candidate = apiCandidates.find((c) => c.id === selectedCandidateId)
+    || getCandidateById(selectedJobId, selectedCandidateId);
+  const dashboardJobs = useDashboardStore((s) => s.jobs);
+  const job = dashboardJobs.find((j) => j.id === selectedJobId);
 
   if (!candidate) {
     return (

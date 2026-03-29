@@ -4,11 +4,13 @@ import { useCallback, useRef } from "react";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useDashboardStore } from "@/stores/dashboard-store";
 import { useDataPanelStore } from "@/stores/data-panel-store";
+import { useCandidateStore } from "@/stores/candidate-store";
 import { MOCK_JOBS } from "@/data/mock-jobs";
 import { MOCK_CANDIDATES } from "@/data/mock-candidates";
 import { PROGRESS_STEPS } from "./chat-types";
 import type { ChatMessage, ActionCardData, JDPreviewData } from "./chat-types";
 import type { Job } from "@/data/mock-jobs";
+import type { Candidate } from "@/data/mock-candidates";
 
 // ── Search intent detection ─────────────────────────────────────────────────
 
@@ -357,6 +359,133 @@ function generateDescription(
   return `We are looking for a ${title} (${locationPhrase}) with ${experience} of relevant experience. The ideal candidate has strong expertise in ${skillsList}. This role is part of the ${department} team and offers an opportunity to make significant impact in a fast-growing organization.`;
 }
 
+// ── Confirmation intent detection ────────────────────────────────────────────
+
+/** Keywords that indicate user is confirming a suggested action (e.g., "yes, search candidates") */
+const CONFIRMATION_PATTERNS = [
+  /^(yes|yeah|yep|sure|ok|okay|go ahead|do it|please|let's go|let's do it|搜|搜索|好的|可以|行|好)$/i,
+  /^(yes|yeah|sure|ok|okay),?\s/i,
+  /search.*(candidate|people|talent)/i,
+  /find.*(candidate|people|talent)/i,
+  /^start\s+search/i,
+];
+
+function isConfirmationIntent(text: string): boolean {
+  const trimmed = text.trim();
+  return CONFIRMATION_PATTERNS.some((p) => p.test(trimmed));
+}
+
+// ── Apollo API integration ──────────────────────────────────────────────────
+
+interface ApolloSearchParams {
+  title?: string;
+  skills?: string[];
+  location?: string;
+  seniority?: string;
+  industry?: string;
+}
+
+interface ApolloCandidate {
+  id: string;
+  name: string;
+  headline: string;
+  currentCompany: string;
+  currentTitle: string;
+  location: string;
+  linkedinUrl: string;
+  experience: Array<{
+    company: string;
+    role: string;
+    period: string;
+    description: string;
+  }>;
+  education: Array<{
+    institution: string;
+    degree: string;
+    year: string;
+  }>;
+  skills: string[];
+  source: "apollo";
+}
+
+interface ApolloSearchResponse {
+  candidates: ApolloCandidate[];
+  total: number;
+  cached: boolean;
+  cacheTimestamp?: string;
+  error?: string;
+}
+
+/** Call our /api/search-candidates endpoint */
+async function searchCandidatesAPI(
+  params: ApolloSearchParams,
+): Promise<ApolloSearchResponse> {
+  const response = await fetch("/api/search-candidates", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    throw new Error(
+      (errBody as { error?: string }).error ||
+        `Search API error: ${response.status}`,
+    );
+  }
+
+  return (await response.json()) as ApolloSearchResponse;
+}
+
+/** Convert Apollo candidates to our Candidate format with basic scoring */
+function apolloToCandidates(
+  apolloCandidates: ApolloCandidate[],
+  jdSkills: string[],
+): Candidate[] {
+  return apolloCandidates.map((ac, index) => {
+    // Simple skill-based scoring (FLOW-3 will replace with AI scoring)
+    const matchedSkills = ac.skills.filter((s) =>
+      jdSkills.some(
+        (jds) => jds.toLowerCase() === s.toLowerCase(),
+      ),
+    );
+    const skillMatchRatio =
+      jdSkills.length > 0 ? matchedSkills.length / jdSkills.length : 0.5;
+
+    // Base score from skill match + experience count bonus
+    const baseScore = Math.round(50 + skillMatchRatio * 40);
+    const experienceBonus = Math.min(ac.experience.length * 2, 10);
+    const matchScore = Math.min(baseScore + experienceBonus, 99);
+
+    // Generate sub-scores
+    const technicalFit = Math.min(
+      Math.round(45 + skillMatchRatio * 50 + Math.random() * 5),
+      99,
+    );
+    const cultureFit = Math.round(50 + Math.random() * 30);
+    const experienceDepth = Math.min(
+      Math.round(40 + ac.experience.length * 8 + Math.random() * 10),
+      99,
+    );
+
+    return {
+      id: ac.id || `apollo-${index}`,
+      name: ac.name,
+      matchScore,
+      skills: ac.skills.length > 0 ? ac.skills : jdSkills.slice(0, 3),
+      subScores: {
+        technicalFit,
+        cultureFit,
+        experienceDepth,
+      },
+      pipelineStatus: "New" as const,
+      experience: ac.experience,
+      education: ac.education,
+      certifications: [],
+    };
+  });
+}
+
 // ── Search matching (existing logic) ────────────────────────────────────────
 
 /**
@@ -469,9 +598,15 @@ export function useChat() {
   const { chatMessages, addChatMessage, updateChatMessage } =
     useSidebarStore();
   const addJob = useDashboardStore((s) => s.addJob);
+  const dashboardJobs = useDashboardStore((s) => s.jobs);
   const selectJob = useDataPanelStore((s) => s.selectJob);
   const setDataPanelOpen = useDataPanelStore((s) => s.setDataPanelOpen);
+  const setCandidates = useCandidateStore((s) => s.setCandidates);
+  const setLoadingCandidates = useCandidateStore((s) => s.setLoading);
+  const setCandidateError = useCandidateStore((s) => s.setError);
   const progressTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  /** Tracks the most recently created job (from FLOW-1) so we can auto-search for it */
+  const lastCreatedJobRef = useRef<{ jobId: string; jdData: JDPreviewData } | null>(null);
 
   /** Generate a unique job ID based on timestamp */
   const generateJobId = useCallback(() => {
@@ -505,6 +640,9 @@ export function useChat() {
       // Add to dashboard store
       addJob(newJob);
 
+      // Track this job so user can confirm search next
+      lastCreatedJobRef.current = { jobId, jdData };
+
       // Open data panel and switch to jobs tab to show the new job
       setDataPanelOpen(true);
 
@@ -522,7 +660,7 @@ export function useChat() {
         const followUpMsg: ChatMessage = {
           id: `followup-${Date.now()}`,
           role: "agent",
-          content: `Want me to start searching for candidates for this ${jdData.title} role?`,
+          content: `Want me to start searching for candidates for this ${jdData.title} role? I'll search Apollo.io for real candidate profiles.`,
           timestamp: new Date(),
         };
         addChatMessage(followUpMsg);
@@ -536,6 +674,194 @@ export function useChat() {
     // The JDPreviewCard handles its own editing state internally.
     // This callback is available for future use (e.g., analytics, logging).
   }, []);
+
+  /** Find a recently created (user) job that matches the search query */
+  const findRecentUserJob = useCallback(
+    (query: string): Job | null => {
+      const lower = query.toLowerCase();
+      // Only check user-created jobs (IDs starting with "job-")
+      for (const job of dashboardJobs) {
+        if (!job.id.startsWith("job-")) continue;
+        const titleWords = job.title.toLowerCase().split(/\s+/);
+        const matchCount = titleWords.filter(
+          (w) => w.length > 2 && lower.includes(w),
+        ).length;
+        if (matchCount > 0) return job;
+      }
+      return null;
+    },
+    [dashboardJobs],
+  );
+
+  /**
+   * FLOW-2: Execute an Apollo.io candidate search for a given job.
+   * Shows progress in chat, calls the API, stores results, shows action card.
+   */
+  const executeApolloSearch = useCallback(
+    (jobId: string, jdData: JDPreviewData) => {
+      // 1. Acknowledgement
+      const ackMessage: ChatMessage = {
+        id: `ack-search-${Date.now()}`,
+        role: "agent",
+        content: `Searching Apollo.io for ${jdData.title} candidates${jdData.location !== "Remote" ? ` in ${jdData.location}` : ""}...`,
+        timestamp: new Date(),
+      };
+      addChatMessage(ackMessage);
+
+      // 2. Start progress
+      const progressId = `progress-apollo-${Date.now() + 1}`;
+
+      progressTimers.current.forEach(clearTimeout);
+      progressTimers.current = [];
+
+      const progressTimer = setTimeout(() => {
+        const progressMessage: ChatMessage = {
+          id: progressId,
+          role: "agent",
+          content: "",
+          timestamp: new Date(),
+          type: "progress",
+          progress: {
+            currentStep: 0,
+            statusText: "Searching Apollo.io talent pool...",
+            isComplete: false,
+          },
+        };
+        addChatMessage(progressMessage);
+
+        // Mark loading in candidate store
+        setLoadingCandidates(jobId, true);
+        setCandidateError(jobId, null);
+
+        // Advance to step 1 after a beat
+        const step1Timer = setTimeout(() => {
+          updateChatMessage(progressId, {
+            progress: {
+              currentStep: 1,
+              statusText: "Retrieving candidate profiles...",
+              isComplete: false,
+            },
+          });
+        }, 1200);
+        progressTimers.current.push(step1Timer);
+
+        // 3. Call Apollo API
+        const apiParams: ApolloSearchParams = {
+          title: jdData.title.replace(/^(Junior|Mid-Level|Senior|Lead|Principal|Staff|Head|Director|VP|C-Level|Intern)\s+/i, ""),
+          skills: jdData.skills,
+          location: jdData.location !== "Remote" ? jdData.location : undefined,
+          seniority: jdData.seniority,
+        };
+
+        searchCandidatesAPI(apiParams)
+          .then((response) => {
+            // Step 2: Scoring
+            updateChatMessage(progressId, {
+              progress: {
+                currentStep: 2,
+                statusText: `Scoring ${response.total} candidates...`,
+                isComplete: false,
+              },
+            });
+
+            const scoreTimer = setTimeout(() => {
+              // Convert to our Candidate format
+              const candidates = apolloToCandidates(
+                response.candidates,
+                jdData.skills,
+              );
+
+              // Store in candidate store
+              setCandidates(jobId, candidates);
+              setLoadingCandidates(jobId, false);
+
+              // Complete progress
+              updateChatMessage(progressId, {
+                progress: {
+                  currentStep: 3,
+                  statusText: `Complete: ${candidates.length} candidates scored`,
+                  isComplete: true,
+                },
+              });
+
+              // Open pipeline panel for this job
+              selectJob(jobId);
+              setDataPanelOpen(true);
+
+              // 4. Action card
+              const cardTimer = setTimeout(() => {
+                const highScoreCount = candidates.filter(
+                  (c) => c.matchScore >= 80,
+                ).length;
+                const avgScore =
+                  candidates.length > 0
+                    ? Math.round(
+                        candidates.reduce((s, c) => s + c.matchScore, 0) /
+                          candidates.length,
+                      )
+                    : 0;
+
+                const actionCardData: ActionCardData = {
+                  title: "Search Complete",
+                  summary: `Found ${candidates.length} candidates from Apollo.io.${response.cached ? " (cached)" : ""} ${highScoreCount} scored above 80% for ${jdData.title}.`,
+                  metrics: [
+                    { label: "Total", value: candidates.length },
+                    { label: "High Score", value: highScoreCount },
+                    { label: "Avg Score", value: avgScore },
+                  ],
+                  actionLabel: "View Pipeline",
+                  actionHref: `/job/${jobId}/pipeline`,
+                };
+                const actionCardMessage: ChatMessage = {
+                  id: `action-card-apollo-${Date.now()}`,
+                  role: "agent",
+                  content: "",
+                  timestamp: new Date(),
+                  type: "action-card",
+                  actionCard: actionCardData,
+                };
+                addChatMessage(actionCardMessage);
+              }, 600);
+              progressTimers.current.push(cardTimer);
+            }, 1000);
+            progressTimers.current.push(scoreTimer);
+          })
+          .catch((error) => {
+            setLoadingCandidates(jobId, false);
+            setCandidateError(
+              jobId,
+              error instanceof Error ? error.message : "Search failed",
+            );
+
+            updateChatMessage(progressId, {
+              progress: {
+                currentStep: 3,
+                statusText: "Search failed",
+                isComplete: true,
+              },
+            });
+
+            const errorMsg: ChatMessage = {
+              id: `error-${Date.now()}`,
+              role: "agent",
+              content: `Search encountered an error: ${error instanceof Error ? error.message : "Unknown error"}. You can try again or check if the API key is configured.`,
+              timestamp: new Date(),
+            };
+            addChatMessage(errorMsg);
+          });
+      }, 400);
+      progressTimers.current.push(progressTimer);
+    },
+    [
+      addChatMessage,
+      updateChatMessage,
+      setCandidates,
+      setLoadingCandidates,
+      setCandidateError,
+      selectJob,
+      setDataPanelOpen,
+    ],
+  );
 
   const handleSend = useCallback(
     (input: string) => {
@@ -627,8 +953,44 @@ export function useChat() {
         return;
       }
 
+      // ── FLOW-2: Confirmation after job creation → Apollo search ────────
+      if (isConfirmationIntent(trimmed) && lastCreatedJobRef.current) {
+        const { jobId, jdData } = lastCreatedJobRef.current;
+        lastCreatedJobRef.current = null; // Consume the ref
+
+        executeApolloSearch(jobId, jdData);
+        return;
+      }
+
       // ── Existing: Search flow ─────────────────────────────────────────
       if (isSearchQuery(trimmed)) {
+        // Check if this search can target a recently created job (from FLOW-1)
+        // or find the best matching mock job
+        const lastCreated = lastCreatedJobRef.current;
+        if (lastCreated) {
+          // User typed a search query with a pending job — use that job
+          lastCreatedJobRef.current = null;
+          executeApolloSearch(lastCreated.jobId, lastCreated.jdData);
+          return;
+        }
+
+        // Try to find a matching job from the dashboard (includes user-created jobs)
+        const userCreatedJob = findRecentUserJob(trimmed);
+        if (userCreatedJob) {
+          const jdData: JDPreviewData = {
+            title: userCreatedJob.title,
+            department: userCreatedJob.department,
+            location: "Remote",
+            experience: "3+ years",
+            skills: userCreatedJob.jd?.skills.map((s) => s.name) || [],
+            description: userCreatedJob.jd?.summary || "",
+            seniority: userCreatedJob.jd?.seniority || "Mid-Level",
+          };
+          executeApolloSearch(userCreatedJob.id, jdData);
+          return;
+        }
+
+        // Fallback to existing mock job matching
         const match = matchJobFromQuery(trimmed);
 
         const ackMessage: ChatMessage = {
@@ -714,7 +1076,7 @@ export function useChat() {
         }, 600);
       }
     },
-    [addChatMessage, updateChatMessage],
+    [addChatMessage, updateChatMessage, executeApolloSearch, findRecentUserJob],
   );
 
   return { messages: chatMessages, handleSend, handleJDConfirm, handleJDModify };

@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-29
-Phase: Phase 6 — Layout Flip & Core Flows (ARCH-1 complete, FLOW-1 complete)
+Phase: Phase 6 — Layout Flip & Core Flows (ARCH-1 complete, FLOW-1 complete, FLOW-2 complete)
 Previous phase completed: Phase 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4, A-2, A-3, A-1 complete)
 
 ==============================================================================
@@ -333,11 +333,34 @@ PHASE 6: LAYOUT FLIP & CORE FLOWS (P0 — New Architecture)
       - npm run build passes cleanly
       - data-testid attributes on all key elements
 
-  [ ] FLOW-2  External API integration (Coresignal/Apollo.io)
-      - API route for Coresignal/Apollo.io candidate search
-      - Agent constructs query from JD structured fields
-      - Real candidate profile retrieval
-      - Error handling, rate limiting, caching
+  [x] FLOW-2  External API integration (Apollo.io)
+      - API route: src/app/api/search-candidates/route.ts
+        - POST endpoint accepting title, skills, location, seniority, industry
+        - Calls Apollo.io People Search API (POST /api/v1/mixed_people/search)
+        - Seniority mapping: Junior→entry, Mid→senior, Senior→senior, Lead→manager, etc.
+        - Returns transformed candidates in our Candidate format
+      - Caching: src/data/apollo-cache.json
+        - SHA-256 hash of search params as cache key
+        - Checks cache before every API call (saves free API quota)
+        - Writes results to JSON cache on each new API call
+        - Graceful fallback on read-only filesystems (Vercel serverless)
+      - Data transformation: Apollo person → HireWise Candidate
+        - name, headline, currentCompany, currentTitle, location, linkedinUrl
+        - experience from employment_history (up to 5 entries)
+        - Skills inferred from JD keywords matched against person text
+      - Candidate store: src/stores/candidate-store.ts (Zustand)
+        - candidatesByJob map for dynamic (API-sourced) candidates
+        - Loading/error state per job
+        - Pipeline & Profile panels read from store first, fall back to mock
+      - Frontend integration in use-chat.ts:
+        - Confirmation intent detection (yes/sure/ok → triggers search for last created job)
+        - executeApolloSearch(): progress ticker → API call → score → action card
+        - apolloToCandidates(): basic skill-based scoring (FLOW-3 will add AI scoring)
+        - Pipeline panel auto-opens with results after search
+      - Pipeline panel updated to show API candidates with loading/error states
+      - Profile panel updated to look up candidates from store
+      - CandidateRankedList updated to support API candidates
+      - npm run build passes cleanly
 
   [ ] FLOW-3  AI scoring & ranking (replaces mock data)
       - Structure raw API candidate data

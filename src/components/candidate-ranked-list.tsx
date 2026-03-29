@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { getCandidatesForJob } from "@/data/mock-candidates";
+import { useCandidateStore } from "@/stores/candidate-store";
 import type { Candidate } from "@/data/mock-candidates";
 
 /**
@@ -38,7 +39,10 @@ function getScoreTextClass(score: number): string {
 }
 
 export function CandidateRankedList({ jobId }: CandidateRankedListProps) {
-  const candidates = getCandidatesForJob(jobId);
+  const apiCandidates = useCandidateStore((s) => s.candidatesByJob[jobId] || []);
+  const candidates = apiCandidates.length > 0
+    ? [...apiCandidates].sort((a, b) => b.matchScore - a.matchScore)
+    : getCandidatesForJob(jobId);
 
   if (candidates.length === 0) {
     return (

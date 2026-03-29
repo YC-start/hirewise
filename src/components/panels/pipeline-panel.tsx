@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowLeft, Users } from "@phosphor-icons/react";
+import { ArrowLeft, Users, CircleNotch } from "@phosphor-icons/react";
 import { useDataPanelStore } from "@/stores/data-panel-store";
-import { MOCK_JOBS } from "@/data/mock-jobs";
+import { useDashboardStore } from "@/stores/dashboard-store";
+import { useCandidateStore } from "@/stores/candidate-store";
 import { getCandidatesForJob } from "@/data/mock-candidates";
 import type { Candidate } from "@/data/mock-candidates";
 
@@ -32,6 +33,10 @@ function getScoreTextClass(score: number): string {
 
 export function PipelinePanelContent() {
   const { selectedJobId, backToJobs, selectCandidate } = useDataPanelStore();
+  const dashboardJobs = useDashboardStore((s) => s.jobs);
+  const apiCandidates = useCandidateStore((s) => s.candidatesByJob[selectedJobId || ""] || []);
+  const isLoading = useCandidateStore((s) => s.loadingJobs[selectedJobId || ""] || false);
+  const searchError = useCandidateStore((s) => s.errors[selectedJobId || ""] || null);
 
   if (!selectedJobId) {
     return (
@@ -51,7 +56,8 @@ export function PipelinePanelContent() {
     );
   }
 
-  const job = MOCK_JOBS.find((j) => j.id === selectedJobId);
+  // Look up job from dashboard store (includes both mock and user-created jobs)
+  const job = dashboardJobs.find((j) => j.id === selectedJobId);
   if (!job) {
     return (
       <div className="flex-1 flex items-center justify-center h-full">
@@ -60,7 +66,10 @@ export function PipelinePanelContent() {
     );
   }
 
-  const candidates = getCandidatesForJob(selectedJobId);
+  // Use API candidates if available, otherwise fall back to mock
+  const candidates = apiCandidates.length > 0
+    ? [...apiCandidates].sort((a, b) => b.matchScore - a.matchScore)
+    : getCandidatesForJob(selectedJobId);
 
   return (
     <div className="flex flex-col h-full overflow-hidden" data-testid="pipeline-panel">
@@ -119,7 +128,16 @@ export function PipelinePanelContent() {
 
       {/* Candidate rows */}
       <div className="flex-1 overflow-y-auto" data-testid="pipeline-candidate-list">
-        {candidates.length === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-full gap-2">
+            <CircleNotch size={20} weight="bold" className="text-accent-primary animate-spin" />
+            <p className="text-text-muted text-xs font-mono">Searching candidates...</p>
+          </div>
+        ) : searchError ? (
+          <div className="flex flex-col items-center justify-center h-full gap-2 px-3">
+            <p className="text-signal-danger text-xs font-mono text-center">{searchError}</p>
+          </div>
+        ) : candidates.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-text-muted text-xs font-mono">No candidates</p>
           </div>
