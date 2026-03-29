@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Briefcase,
   Users,
@@ -9,6 +10,12 @@ import {
   ListBullets,
 } from "@phosphor-icons/react";
 import { useDashboardStore } from "@/stores/dashboard-store";
+import {
+  MOCK_JOBS,
+  computeStats,
+  STATUS_BADGE_STYLES,
+  type Job,
+} from "@/data/mock-jobs";
 
 /**
  * Dashboard page — Job card grid / list view (B-1 + B-2).
@@ -19,103 +26,19 @@ import { useDashboardStore } from "@/stores/dashboard-store";
  * - Job card data: title, status badge, resume count, high-score count, interviews
  * - Status badges: Active=#D4FF00, Draft=#888888, Paused=#FFB800, Closed=#FF4444
  * - "Industrial Clarity" design: dark surfaces, dense layout, no gradients/shadows
+ * - Each card/row links to /job/[id]/pipeline
+ * - "+ New Job" pill-shaped CTA with placeholder alert
  */
-
-// ── Mock job data ──────────────────────────────────────────────────────────
-
-interface Job {
-  id: string;
-  title: string;
-  department: string;
-  status: "Active" | "Draft" | "Paused" | "Closed";
-  resumes: number;
-  highScore: number;
-  interviews: number;
-}
-
-const MOCK_JOBS: Job[] = [
-  {
-    id: "1",
-    title: "Senior Backend Engineer",
-    department: "Engineering",
-    status: "Active",
-    resumes: 142,
-    highScore: 12,
-    interviews: 4,
-  },
-  {
-    id: "2",
-    title: "Product Designer",
-    department: "Design",
-    status: "Active",
-    resumes: 89,
-    highScore: 8,
-    interviews: 2,
-  },
-  {
-    id: "3",
-    title: "DevOps Lead",
-    department: "Infrastructure",
-    status: "Draft",
-    resumes: 0,
-    highScore: 0,
-    interviews: 0,
-  },
-  {
-    id: "4",
-    title: "Frontend Engineer",
-    department: "Engineering",
-    status: "Paused",
-    resumes: 67,
-    highScore: 5,
-    interviews: 1,
-  },
-  {
-    id: "5",
-    title: "Data Scientist",
-    department: "AI/ML",
-    status: "Active",
-    resumes: 203,
-    highScore: 18,
-    interviews: 6,
-  },
-  {
-    id: "6",
-    title: "Technical Writer",
-    department: "Documentation",
-    status: "Closed",
-    resumes: 34,
-    highScore: 3,
-    interviews: 2,
-  },
-];
-
-// ── Status badge colors ────────────────────────────────────────────────────
-
-const STATUS_BADGE_STYLES: Record<Job["status"], string> = {
-  Active: "bg-accent-primary text-surface-primary",
-  Draft: "bg-text-secondary text-surface-primary",
-  Paused: "bg-signal-warning text-surface-primary",
-  Closed: "bg-signal-danger text-surface-primary",
-};
-
-// ── Aggregate stats from mock data ─────────────────────────────────────────
-
-function computeStats(jobs: Job[]) {
-  const openPositions = jobs.filter(
-    (j) => j.status === "Active" || j.status === "Draft" || j.status === "Paused"
-  ).length;
-  const totalCandidates = jobs.reduce((sum, j) => sum + j.resumes, 0);
-  const highScorers = jobs.reduce((sum, j) => sum + j.highScore, 0);
-  const interviews = jobs.reduce((sum, j) => sum + j.interviews, 0);
-  return { openPositions, totalCandidates, highScorers, interviews };
-}
 
 // ── Page Component ─────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const { viewMode, setViewMode } = useDashboardStore();
   const stats = computeStats(MOCK_JOBS);
+
+  const handleNewJob = () => {
+    alert("Coming soon — the quick-create job modal will be available in a future update (B-3).");
+  };
 
   return (
     <div className="flex-1 overflow-y-auto pb-16 md:pb-0">
@@ -127,7 +50,10 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3">
           {/* View toggle */}
           <ViewToggle viewMode={viewMode} onChange={setViewMode} />
-          <button className="flex items-center gap-2 px-4 py-1.5 bg-accent-primary text-surface-primary font-heading text-sm font-700 hover:opacity-90 transition-opacity">
+          <button
+            onClick={handleNewJob}
+            className="flex items-center gap-2 px-4 py-1.5 bg-accent-primary text-surface-primary font-heading text-sm font-700 rounded-full hover:opacity-90 transition-opacity"
+          >
             + New Job
           </button>
         </div>
@@ -264,8 +190,9 @@ function StatCard({
 
 function JobCard({ job }: { job: Job }) {
   return (
-    <div
-      className="border border-border-default bg-surface-secondary p-4 hover:bg-surface-tertiary transition-colors cursor-pointer group"
+    <Link
+      href={`/job/${job.id}/pipeline`}
+      className="block border border-border-default bg-surface-secondary p-4 hover:bg-surface-tertiary transition-colors cursor-pointer group"
       data-testid={`job-card-${job.id}`}
     >
       {/* Header */}
@@ -298,7 +225,7 @@ function JobCard({ job }: { job: Job }) {
           label="Interviews"
         />
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -367,8 +294,9 @@ function JobListView({ jobs }: { jobs: Job[] }) {
 
       {/* Table rows */}
       {jobs.map((job, idx) => (
-        <div
+        <Link
           key={job.id}
+          href={`/job/${job.id}/pipeline`}
           className={`grid items-center px-4 border-b border-border-default last:border-b-0 hover:bg-surface-tertiary transition-colors cursor-pointer ${
             idx % 2 === 1 ? "bg-surface-tertiary/30" : ""
           }`}
@@ -419,7 +347,7 @@ function JobListView({ jobs }: { jobs: Job[] }) {
               {job.interviews}
             </span>
           </div>
-        </div>
+        </Link>
       ))}
     </div>
   );

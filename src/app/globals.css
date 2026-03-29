@@ -81,8 +81,8 @@
   --color-score-mid: var(--score-gradient-mid);
   --color-score-low: var(--score-gradient-low);
   --font-sans: var(--font-body);
-  --font-mono: var(--font-mono);
-  --font-heading: var(--font-heading);
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
+  --font-heading: var(--font-space-grotesk), "Space Grotesk", sans-serif;
 }
 
 /* --- Base / Reset --- */
@@ -178,4 +178,26 @@ h3 { font-size: var(--text-h3); }
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+
+/* --- Sidebar expand/collapse transition --- */
+.sidebar-transition {
+  transition: width 200ms ease-in-out;
+}
+
+/* --- iOS safe area for mobile bottom nav --- */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* --- Respect reduced motion preference --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

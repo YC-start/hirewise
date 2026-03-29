@@ -64,7 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Mobile Bottom Tab Navigation */}
         <nav
-          className="flex-shrink-0 h-14 bg-surface-secondary border-t border-border-default flex items-center justify-around z-50"
+          className="flex-shrink-0 h-14 bg-surface-secondary border-t border-border-default flex items-center justify-around z-50 safe-area-bottom"
           data-testid="mobile-bottom-nav"
         >
           <button

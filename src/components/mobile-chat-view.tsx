@@ -1,31 +1,17 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { PaperPlaneRight, Robot, User } from "@phosphor-icons/react";
-
-interface ChatMessage {
-  id: string;
-  role: "user" | "agent";
-  content: string;
-  timestamp: Date;
-}
-
-const INITIAL_MESSAGES: ChatMessage[] = [
-  {
-    id: "welcome",
-    role: "agent",
-    content:
-      "Welcome to HireWise. I'm your recruiting agent. Tell me what you need — find candidates, create a job, or summarize your pipeline.",
-    timestamp: new Date(),
-  },
-];
+import { PaperPlaneRight } from "@phosphor-icons/react";
+import { ChatBubble, useChat } from "@/components/chat";
 
 /**
  * MobileChatView — Full-screen chat interface for mobile (<768px).
  * Rendered as the primary tab in mobile bottom-nav layout.
+ * Messages are stored in the Zustand sidebar store so they persist
+ * across tab switches (unmount/remount).
  */
 export function MobileChatView() {
-  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+  const { messages, handleSend } = useChat();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -33,35 +19,15 @@ export function MobileChatView() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = () => {
-    const trimmed = input.trim();
-    if (!trimmed) return;
-
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: trimmed,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+  const onSend = () => {
+    handleSend(input);
     setInput("");
-
-    setTimeout(() => {
-      const agentMessage: ChatMessage = {
-        id: `agent-${Date.now()}`,
-        role: "agent",
-        content: `Processing your request: "${trimmed}". Full agent integration will be available in a future update.`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, agentMessage]);
-    }, 600);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      onSend();
     }
   };
 
@@ -83,7 +49,7 @@ export function MobileChatView() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-2">
         {messages.map((msg) => (
-          <MobileChatBubble key={msg.id} message={msg} />
+          <ChatBubble key={msg.id} message={msg} />
         ))}
         <div ref={messagesEndRef} />
       </div>
@@ -101,7 +67,7 @@ export function MobileChatView() {
             data-testid="mobile-chat-input"
           />
           <button
-            onClick={handleSend}
+            onClick={onSend}
             disabled={!input.trim()}
             className="p-2.5 text-accent-primary hover:bg-surface-tertiary transition-colors disabled:text-text-muted disabled:cursor-not-allowed"
             aria-label="Send message"
@@ -110,42 +76,6 @@ export function MobileChatView() {
             <PaperPlaneRight size={18} weight="bold" />
           </button>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function MobileChatBubble({ message }: { message: ChatMessage }) {
-  const isUser = message.role === "user";
-
-  return (
-    <div
-      className={`flex gap-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}
-      data-testid={`mobile-chat-bubble-${message.role}`}
-    >
-      <div
-        className={`flex-shrink-0 flex items-center justify-center w-7 h-7 mt-0.5 ${
-          isUser
-            ? "bg-accent-primary text-surface-primary"
-            : "bg-surface-tertiary text-text-secondary"
-        }`}
-      >
-        {isUser ? (
-          <User size={14} weight="bold" />
-        ) : (
-          <Robot size={14} weight="bold" />
-        )}
-      </div>
-
-      <div
-        className={`max-w-[85%] px-3 py-2 text-sm leading-relaxed ${
-          isUser
-            ? "bg-accent-primary text-surface-primary"
-            : "bg-surface-secondary border border-border-default text-text-primary"
-        }`}
-        style={{ borderRadius: "var(--radius-max)" }}
-      >
-        {message.content}
       </div>
     </div>
   );

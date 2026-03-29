@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-29
-Phase: 2 — Job Dashboard (LAYOUT-1, LAYOUT-2, B-1, B-2 complete, C-1 next)
+Phase: 2 — Job Dashboard (LAYOUT-1, LAYOUT-2, B-1, B-2 complete, evaluator fixes applied, C-1 next)
 
 ==============================================================================
 PHASE 0: PLANNING & SPECIFICATION
@@ -27,6 +27,8 @@ PHASE 1: APP SHELL & DESIGN SYSTEM (P0 — Layout)
       - Tailwind v4 @theme inline registration of all design tokens
       - Dashboard page with demo job cards to showcase design system
       - AppShell component with sidebar placeholder + mobile bottom nav
+      [EVAL FIX] Fixed --font-mono self-reference in @theme inline (was var(--font-mono) -> now explicit fallback)
+      [EVAL FIX] Added prefers-reduced-motion media query
 
   [x] LAYOUT-1  Persistent chat sidebar with collapse
       - ChatSidebar component with expand/collapse toggle (Zustand store)
@@ -39,6 +41,10 @@ PHASE 1: APP SHELL & DESIGN SYSTEM (P0 — Layout)
       - MobileChatView component for mobile full-screen chat
       - Chat bubbles: user #D4FF00 bg, agent #1A1A1A bg, rectangular (max 4px radius)
       - Simulated agent responses for demo/testing
+      [EVAL FIX] Chat messages state lifted to Zustand store (sidebar-store.ts) to survive mobile tab switches
+      [EVAL FIX] Extracted shared chat modules to src/components/chat/ (ChatBubble, useChat, chat-types)
+      [EVAL FIX] Added env(safe-area-inset-bottom) to mobile bottom nav
+      [EVAL FIX] Added CSS transition (200ms ease-in-out) for sidebar expand/collapse width changes
 
 ==============================================================================
 PHASE 2: JOB DASHBOARD — MODULE B (P0)
@@ -51,6 +57,10 @@ PHASE 2: JOB DASHBOARD — MODULE B (P0)
       - Grid view: responsive 1/2/3-column card grid
       - List view: compact table with row-height 42px, alternating tint, table-header uppercase
       - data-testid attributes on grid/list containers and toggle buttons
+      [EVAL FIX] Job cards and list rows now wrap in Next.js <Link> to /job/[id]/pipeline
+      [EVAL FIX] "+ New Job" button now shows placeholder alert (B-3 coming soon)
+      [EVAL FIX] "+ New Job" button uses rounded-full (pill-shaped primary CTA per spec)
+      [EVAL FIX] Mock data extracted to src/data/mock-jobs.ts (single source of truth)
 
   [x] B-2  Job card data display
       - StatusBadge component: Active=#D4FF00, Draft=#888888, Paused=#FFB800, Closed=#FF4444
