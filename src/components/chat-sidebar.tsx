@@ -7,7 +7,7 @@ import {
   PaperPlaneRight,
 } from "@phosphor-icons/react";
 import { useSidebarStore } from "@/stores/sidebar-store";
-import { ChatBubble, useChat } from "@/components/chat";
+import { ChatBubble, ProgressIndicator, useChat } from "@/components/chat";
 
 /**
  * ChatSidebar — Persistent chat sidebar with expand/collapse.
@@ -107,9 +107,13 @@ export function ChatSidebar() {
         className="flex-1 overflow-y-auto px-3 pb-3 flex flex-col gap-2"
         data-testid="chat-messages"
       >
-        {messages.map((msg) => (
-          <ChatBubble key={msg.id} message={msg} />
-        ))}
+        {messages.map((msg) =>
+          msg.type === "progress" && msg.progress ? (
+            <ProgressIndicator key={msg.id} progress={msg.progress} />
+          ) : (
+            <ChatBubble key={msg.id} message={msg} />
+          ),
+        )}
         <div ref={messagesEndRef} />
       </div>
 

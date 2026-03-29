@@ -190,6 +190,12 @@ h3 { font-size: var(--text-h3); }
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* --- Progress indicator pulse animation --- */
+@keyframes pulse-segment {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 /* --- Respect reduced motion preference --- */
 @media (prefers-reduced-motion: reduce) {
   *,

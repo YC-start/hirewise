@@ -17,6 +17,8 @@ interface SidebarState {
   setMobileActiveTab: (tab: "chat" | "dashboard" | "pipeline") => void;
   /** Append a message to the chat history */
   addChatMessage: (message: ChatMessage) => void;
+  /** Update an existing message by id (partial merge). Used by progress ticker. */
+  updateChatMessage: (id: string, updates: Partial<ChatMessage>) => void;
 }
 
 export const useSidebarStore = create<SidebarState>((set) => ({
@@ -28,4 +30,10 @@ export const useSidebarStore = create<SidebarState>((set) => ({
   setMobileActiveTab: (tab) => set({ mobileActiveTab: tab }),
   addChatMessage: (message) =>
     set((state) => ({ chatMessages: [...state.chatMessages, message] })),
+  updateChatMessage: (id, updates) =>
+    set((state) => ({
+      chatMessages: state.chatMessages.map((msg) =>
+        msg.id === id ? { ...msg, ...updates } : msg,
+      ),
+    })),
 }));

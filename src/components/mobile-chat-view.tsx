@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { PaperPlaneRight } from "@phosphor-icons/react";
-import { ChatBubble, useChat } from "@/components/chat";
+import { ChatBubble, ProgressIndicator, useChat } from "@/components/chat";
 
 /**
  * MobileChatView — Full-screen chat interface for mobile (<768px).
@@ -48,9 +48,13 @@ export function MobileChatView() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-2">
-        {messages.map((msg) => (
-          <ChatBubble key={msg.id} message={msg} />
-        ))}
+        {messages.map((msg) =>
+          msg.type === "progress" && msg.progress ? (
+            <ProgressIndicator key={msg.id} progress={msg.progress} />
+          ) : (
+            <ChatBubble key={msg.id} message={msg} />
+          ),
+        )}
         <div ref={messagesEndRef} />
       </div>
 

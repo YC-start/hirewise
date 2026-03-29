@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-29
-Phase: 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4 complete, A-1 next)
+Phase: 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4, A-2 complete, A-1/A-3 next)
 
 ==============================================================================
 PHASE 0: PLANNING & SPECIFICATION
@@ -177,9 +177,20 @@ PHASE 5: AGENT CHAT — MODULE A (P0)
       - Agent request/response cycle
       - Results pushed to pipeline
 
-  [ ] A-2  Live progress ticker
-      - Segmented progress bar component
-      - Real-time status text updates
+  [x] A-2  Live progress ticker
+      - ProgressIndicator component (src/components/chat/progress-indicator.tsx)
+      - Segmented 4-step progress bar: Searching -> Retrieving -> Scoring -> Complete
+      - Filled segments use accent-primary (#D4FF00), unfilled use surface-tertiary (#262626)
+      - No border-radius (flat industrial style), 2px gap between segments
+      - Status text in JetBrains Mono 13px, text-secondary color
+      - Container: surface-secondary bg, border-default border
+      - ChatMessage type extended with optional type ("text"|"progress") and progress state
+      - useChat hook detects search keywords (find, search, look for, etc.) and triggers progress sequence
+      - Progress advances through 4 stages via setTimeout (1.5s intervals)
+      - Active segment pulses via CSS keyframe animation (pulse-segment in globals.css)
+      - Zustand sidebar-store updated with updateChatMessage for in-place progress updates
+      - Both ChatSidebar and MobileChatView render ProgressIndicator for progress-type messages
+      - Completion triggers a result summary message (prep for A-3 Action Card)
 
   [ ] A-3  Structured Action Card output
       - Action Card component (left accent border, buttons)
