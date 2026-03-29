@@ -89,12 +89,17 @@
 }
 
 /* --- Base / Reset --- */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* Wrapped in @layer base so Tailwind v4 utility classes (in @layer utilities)
+   can override padding/margin. Unlayered CSS always beats layered CSS in the
+   cascade, which was causing all p-*, m-*, px-*, etc. to resolve to 0. */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 html {
