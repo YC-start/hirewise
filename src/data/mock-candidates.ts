@@ -23,6 +23,19 @@ export interface Education {
   year: string;
 }
 
+export interface DimensionScore {
+  dimension: string;
+  score: number;
+  reasoning: string;
+}
+
+export interface AIEvaluation {
+  overallReasoning: string;
+  dimensionScores: DimensionScore[];
+  skillGaps: string[];
+  strengths: string[];
+}
+
 export interface Candidate {
   id: string;
   name: string;
@@ -33,6 +46,7 @@ export interface Candidate {
   experience?: Experience[];
   education?: Education[];
   certifications?: string[];
+  aiEvaluation?: AIEvaluation;
 }
 
 /**
@@ -729,6 +743,143 @@ export const MOCK_CANDIDATES: Record<string, Candidate[]> = {
     },
   ],
 };
+
+// ── AI Evaluation Data Generator ───────────────────────────────────────────
+// Deterministically generates plausible AI evaluation data from existing
+// candidate fields. In production this would come from the scoring pipeline.
+
+/** Skill gap pools per job category (keyed by first candidate id prefix). */
+const SKILL_GAP_POOLS: Record<string, string[]> = {
+  c1: ["System Design at Scale", "Event-Driven Architecture", "Observability (OpenTelemetry)", "Chaos Engineering", "eBPF", "Service Mesh (Istio)", "Load Testing (k6)", "Database Sharding"],
+  c2: ["Design Ops Workflow", "Quantitative UX Metrics", "Cross-Platform Design (iOS/Android)", "Design Token Automation", "Advanced Animation Principles", "Inclusive Design Certification", "Component Versioning Strategy"],
+  c3: ["Incident Response Runbooks", "FinOps / Cost Optimization", "Zero-Trust Networking", "GitOps (ArgoCD/Flux)", "SLO/SLI Definition", "Disaster Recovery Planning", "Multi-Cloud Strategy"],
+  c4: ["Server Components Architecture", "Micro-Frontend Patterns", "Web Vitals Optimization", "WebGL / Canvas Rendering", "PWA Implementation", "Internationalization (i18n)", "Design System Governance"],
+  c5: ["Model Evaluation Frameworks", "Prompt Engineering Best Practices", "Multi-Modal AI Architectures", "RLHF / Alignment Techniques", "Edge Inference Optimization", "Data Governance & Lineage", "Experiment Tracking at Scale"],
+  c6: ["Docs-as-Code CI Pipeline", "Information Architecture Strategy", "SDK Code Samples (Multi-language)", "Interactive API Playground Design", "Localization Workflow", "Accessibility (WCAG) for Docs", "Versioned Documentation Strategy"],
+};
+
+const STRENGTH_POOLS: Record<string, string[]> = {
+  c1: ["Deep systems-level expertise", "Proven track record at high-scale companies", "Strong open-source contributions", "Excellent distributed systems intuition", "Production Kubernetes experience", "Database performance optimization", "API design clarity"],
+  c2: ["Exceptional visual design sense", "Strong design systems thinking", "User research methodology expertise", "Cross-functional collaboration skills", "Prototyping speed and fidelity", "Pixel-perfect attention to detail", "Design critique leadership"],
+  c3: ["Infrastructure automation mastery", "Multi-cloud deployment experience", "Strong monitoring and alerting instincts", "Cost-conscious architecture decisions", "Incident management composure", "Terraform module reusability", "Security-first infrastructure mindset"],
+  c4: ["Modern React architecture expertise", "Performance optimization instincts", "Accessibility-first development", "Component API design elegance", "CSS mastery across paradigms", "TypeScript type-safety discipline", "Developer experience focus"],
+  c5: ["Deep mathematical foundations", "Research-to-production pipeline experience", "Novel model architecture intuition", "Data quality obsession", "Experiment design rigor", "Cross-functional ML communication", "MLOps pipeline maturity"],
+  c6: ["Technical accuracy and clarity", "Developer empathy in writing", "API documentation expertise", "Docs toolchain proficiency", "Content strategy vision", "Community engagement skills", "Complex concept simplification"],
+};
+
+/** Reasoning templates for each dimension. */
+function getTechnicalFitReasoning(score: number, skills: string[]): string {
+  const topSkills = skills.slice(0, 3).join(", ");
+  if (score >= 90) return `Exceptional technical alignment. Core competencies in ${topSkills} directly match the role requirements. Demonstrated advanced-level proficiency across the primary tech stack.`;
+  if (score >= 80) return `Strong technical fit with solid skills in ${topSkills}. Meets most core requirements with room for growth in adjacent technologies.`;
+  if (score >= 65) return `Moderate technical alignment. Proficiency in ${topSkills} covers some requirements, but notable gaps exist in key areas of the job specification.`;
+  if (score >= 50) return `Partial technical match. Some relevant skills in ${topSkills}, but significant upskilling would be required for core role responsibilities.`;
+  return `Limited technical overlap with role requirements. Background in ${topSkills} does not strongly align with the primary technology stack needed.`;
+}
+
+function getCultureFitReasoning(score: number, name: string): string {
+  if (score >= 90) return `${name} demonstrates strong alignment with team values: collaborative communication style, evidence of mentoring, and a growth mindset visible across career progression.`;
+  if (score >= 80) return `Good cultural indicators. ${name} shows a collaborative approach and adaptability across different team environments and company stages.`;
+  if (score >= 65) return `Reasonable cultural alignment. ${name} has worked in similar environments but limited signals on team dynamics and communication preferences.`;
+  if (score >= 50) return `Mixed cultural signals. ${name} may need onboarding support to align with the team's working style and collaboration norms.`;
+  return `Uncertain cultural fit. Limited evidence of alignment with the team's communication patterns, pace, and collaboration expectations.`;
+}
+
+function getExperienceDepthReasoning(score: number, yearsEstimate: number): string {
+  if (score >= 90) return `Deep experience profile spanning ${yearsEstimate}+ years in directly relevant roles. Career trajectory shows consistent progression and increasing scope of responsibility.`;
+  if (score >= 80) return `Solid experience base with approximately ${yearsEstimate} years in related domains. Shows meaningful career growth and hands-on project leadership.`;
+  if (score >= 65) return `Adequate experience at ${yearsEstimate} years but with some gaps in seniority-level exposure. Could benefit from mentorship in the first quarter.`;
+  if (score >= 50) return `Developing experience profile at roughly ${yearsEstimate} years. Prior roles have some relevance but lack the depth expected for this seniority level.`;
+  return `Limited relevant experience. Approximately ${yearsEstimate} years in adjacent fields but minimal direct exposure to the core responsibilities of this role.`;
+}
+
+function getLeadershipPotentialReasoning(score: number): string {
+  if (score >= 85) return "Strong leadership indicators: history of leading teams, driving technical decisions, and mentoring junior engineers. Ready for senior-level ownership.";
+  if (score >= 70) return "Emerging leadership traits. Has contributed to team direction and shown initiative in project scoping. Potential for growth into a lead role.";
+  if (score >= 50) return "Some leadership signals through project ownership, but limited evidence of team management or strategic influence at the organization level.";
+  return "Individual contributor profile. No strong signals of leadership experience or ambition toward management, which may be acceptable for IC-focused roles.";
+}
+
+function getOverallReasoning(score: number, name: string, topSkills: string[]): string {
+  const top = topSkills.slice(0, 2).join(" and ");
+  if (score >= 90) return `${name} is a top-tier candidate with exceptional alignment across technical skills, experience depth, and cultural fit. Their expertise in ${top} positions them as an immediate value contributor with minimal ramp-up time.`;
+  if (score >= 80) return `${name} presents a strong overall profile. Solid technical grounding in ${top} combined with relevant industry experience makes them a competitive candidate. Minor gaps are addressable through onboarding.`;
+  if (score >= 65) return `${name} is a viable candidate with meaningful strengths in ${top}, though some dimensions fall below the ideal threshold. Consider for the next round with targeted interview questions on weaker areas.`;
+  if (score >= 50) return `${name} shows partial alignment with the role requirements. While ${top} skills are present, the overall profile suggests a gap between current capabilities and role expectations.`;
+  return `${name} does not strongly match the current role requirements. The skill set in ${top} has limited overlap with the job specification. Recommend passing unless the role scope is adjusted.`;
+}
+
+function generateAIEvaluation(candidate: Candidate): AIEvaluation {
+  const { matchScore, subScores, skills, name } = candidate;
+
+  // Estimate years of experience from experience array length
+  const yearsEstimate = candidate.experience
+    ? Math.max(candidate.experience.length * 3, 2)
+    : 2;
+
+  // Derive leadership potential from a blend of culture fit and experience depth
+  const leadershipScore = Math.round(
+    subScores.cultureFit * 0.4 + subScores.experienceDepth * 0.6
+  );
+
+  const dimensionScores: DimensionScore[] = [
+    {
+      dimension: "Technical Fit",
+      score: subScores.technicalFit,
+      reasoning: getTechnicalFitReasoning(subScores.technicalFit, skills),
+    },
+    {
+      dimension: "Culture Fit",
+      score: subScores.cultureFit,
+      reasoning: getCultureFitReasoning(subScores.cultureFit, name),
+    },
+    {
+      dimension: "Experience Depth",
+      score: subScores.experienceDepth,
+      reasoning: getExperienceDepthReasoning(subScores.experienceDepth, yearsEstimate),
+    },
+    {
+      dimension: "Leadership Potential",
+      score: leadershipScore,
+      reasoning: getLeadershipPotentialReasoning(leadershipScore),
+    },
+  ];
+
+  // Determine job category from candidate id prefix
+  const prefix = candidate.id.split("-")[0]; // e.g. "c1"
+  const gapPool = SKILL_GAP_POOLS[prefix] || SKILL_GAP_POOLS.c1;
+  const strengthPool = STRENGTH_POOLS[prefix] || STRENGTH_POOLS.c1;
+
+  // Pick skill gaps inversely proportional to score (lower score = more gaps)
+  const gapCount = matchScore >= 85 ? 2 : matchScore >= 65 ? 3 : matchScore >= 50 ? 4 : 5;
+  // Use a deterministic "hash" from the matchScore + id length to pick different items
+  const seed = matchScore + candidate.id.length + candidate.name.length;
+  const skillGaps = gapPool
+    .slice(0)
+    .sort((a, b) => ((a.length * seed) % 97) - ((b.length * seed) % 97))
+    .slice(0, gapCount);
+
+  // Pick strengths proportional to score (higher score = more strengths)
+  const strengthCount = matchScore >= 85 ? 4 : matchScore >= 65 ? 3 : matchScore >= 50 ? 2 : 1;
+  const strengths = strengthPool
+    .slice(0)
+    .sort((a, b) => ((b.length * seed) % 89) - ((a.length * seed) % 89))
+    .slice(0, strengthCount);
+
+  return {
+    overallReasoning: getOverallReasoning(matchScore, name, skills),
+    dimensionScores,
+    skillGaps,
+    strengths,
+  };
+}
+
+// ── Hydrate all candidates with AI evaluation data ────────────────────────
+for (const jobId of Object.keys(MOCK_CANDIDATES)) {
+  for (const candidate of MOCK_CANDIDATES[jobId]) {
+    candidate.aiEvaluation = generateAIEvaluation(candidate);
+  }
+}
 
 /**
  * Get candidates for a job, sorted by matchScore descending.

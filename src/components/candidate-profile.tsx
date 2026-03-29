@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { Candidate, Experience, Education } from "@/data/mock-candidates";
+import type { Candidate, Experience, Education, AIEvaluation, DimensionScore } from "@/data/mock-candidates";
 
 /**
  * CandidateProfile — Candidate detail page content (D-1).
@@ -143,6 +143,14 @@ export function CandidateProfile({ candidate, jobId, jobTitle }: CandidateProfil
               ))}
             </div>
           </section>
+
+          {/* ── AI Evaluation Report ────────────────────────────── */}
+          {candidate.aiEvaluation && (
+            <AIEvaluationReport
+              evaluation={candidate.aiEvaluation}
+              overallScore={candidate.matchScore}
+            />
+          )}
 
           {/* ── Resume: Work Experience Timeline ────────────────── */}
           {candidate.experience && candidate.experience.length > 0 && (
@@ -360,6 +368,150 @@ function CertificationEntry({
         <p className="text-sm font-500 text-text-primary leading-tight">
           {certification}
         </p>
+      </div>
+    </div>
+  );
+}
+
+// ── AI Evaluation Report ──────────────────────────────────────────────────
+
+function AIEvaluationReport({
+  evaluation,
+  overallScore,
+}: {
+  evaluation: AIEvaluation;
+  overallScore: number;
+}) {
+  return (
+    <section className="mb-8" data-testid="ai-evaluation-section">
+      {/* Section header — table-header style */}
+      <h2 className="table-header mb-4 pb-2 border-b border-border-default">
+        AI Evaluation Report
+      </h2>
+
+      {/* Overall Score + Reasoning */}
+      <div
+        className="bg-surface-secondary border border-border-default p-4 mb-4"
+        data-testid="ai-overall-reasoning"
+      >
+        <div className="flex items-center gap-3 mb-3">
+          <span className="table-header text-[10px]">Overall Assessment</span>
+          <span
+            className={`font-heading font-700 text-[24px] leading-none ${getScoreTextClass(overallScore)}`}
+            style={{ fontVariantNumeric: "tabular-nums" }}
+          >
+            {overallScore}
+          </span>
+          <span className="text-text-muted text-xs font-mono">/ 100</span>
+        </div>
+        <p className="text-sm text-text-secondary leading-relaxed" style={{ fontFamily: "var(--font-body)", fontSize: "14px" }}>
+          {evaluation.overallReasoning}
+        </p>
+      </div>
+
+      {/* Dimension Score Bars */}
+      <div className="mb-4" data-testid="ai-dimension-scores">
+        <h3 className="table-header mb-3 text-[10px]">Dimension Scores</h3>
+        <div className="flex flex-col gap-3">
+          {evaluation.dimensionScores.map((dim) => (
+            <DimensionScoreBar key={dim.dimension} dimension={dim} />
+          ))}
+        </div>
+      </div>
+
+      {/* Dimension Reasoning Details */}
+      <div className="mb-4" data-testid="ai-dimension-reasoning">
+        <h3 className="table-header mb-3 text-[10px]">Detailed Analysis</h3>
+        <div className="flex flex-col gap-2">
+          {evaluation.dimensionScores.map((dim) => (
+            <div
+              key={dim.dimension}
+              className="bg-surface-secondary border border-border-default p-3"
+              data-testid={`reasoning-${dim.dimension.toLowerCase().replace(/\s+/g, "-")}`}
+            >
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-xs font-500 text-text-primary">{dim.dimension}</span>
+                <span
+                  className={`font-mono text-xs font-500 ${getScoreTextClass(dim.score)}`}
+                  style={{ fontVariantNumeric: "tabular-nums" }}
+                >
+                  {dim.score}
+                </span>
+              </div>
+              <p className="text-text-secondary leading-relaxed" style={{ fontFamily: "var(--font-body)", fontSize: "14px" }}>
+                {dim.reasoning}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Strengths + Skill Gaps side by side on larger screens */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Strengths */}
+        <div data-testid="ai-strengths">
+          <h3 className="table-header mb-3 text-[10px]">Strengths</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {evaluation.strengths.map((strength) => (
+              <span
+                key={strength}
+                className="inline-flex items-center px-2 py-1 text-[11px] font-mono font-500 leading-tight text-accent-primary border border-accent-primary/40 bg-accent-primary/8"
+              >
+                {strength}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Skill Gaps */}
+        <div data-testid="ai-skill-gaps">
+          <h3 className="table-header mb-3 text-[10px]">Skill Gaps</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {evaluation.skillGaps.map((gap) => (
+              <span
+                key={gap}
+                className="inline-flex items-center px-2 py-1 text-[11px] font-mono font-500 leading-tight text-signal-danger border border-signal-danger/40 bg-signal-danger/8"
+              >
+                {gap}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Dimension Score Bar ───────────────────────────────────────────────────
+
+function DimensionScoreBar({ dimension }: { dimension: DimensionScore }) {
+  const barColor = getScoreColor(dimension.score);
+  const textClass = getScoreTextClass(dimension.score);
+
+  return (
+    <div className="flex items-center gap-3" data-testid={`dimension-bar-${dimension.dimension.toLowerCase().replace(/\s+/g, "-")}`}>
+      {/* Label — fixed width for alignment */}
+      <span className="w-[140px] flex-shrink-0 text-xs text-text-secondary font-500 truncate">
+        {dimension.dimension}
+      </span>
+
+      {/* Score value */}
+      <span
+        className={`w-[32px] flex-shrink-0 font-mono text-sm font-500 text-right ${textClass}`}
+        style={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        {dimension.score}
+      </span>
+
+      {/* Horizontal bar — flat ends, industrial style */}
+      <div className="flex-1 h-[8px] bg-surface-tertiary">
+        <div
+          className="h-full transition-all duration-300"
+          style={{
+            width: `${dimension.score}%`,
+            backgroundColor: barColor,
+          }}
+        />
       </div>
     </div>
   );

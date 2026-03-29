@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-29
-Phase: 4 — Candidate Profile (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1 complete, D-2 next)
+Phase: 4 — Candidate Profile (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2 complete, D-4 next)
 
 ==============================================================================
 PHASE 0: PLANNING & SPECIFICATION
@@ -132,9 +132,23 @@ PHASE 4: CANDIDATE PROFILE — MODULE D (P0)
       - Graceful not-found fallback for invalid candidate IDs
       - data-testid attributes on all key elements
 
-  [ ] D-2  AI Evaluation Report display
-      - Score breakdown by dimension
-      - Reasoning text and skill gaps
+  [x] D-2  AI Evaluation Report display
+      - Extended Candidate interface with AIEvaluation, DimensionScore types
+      - AI evaluation data: overallReasoning, dimensionScores (4 dimensions), skillGaps, strengths
+      - Deterministic evaluation generator in mock-candidates.ts (derives from existing scores/skills)
+      - Dimensions: Technical Fit, Culture Fit, Experience Depth, Leadership Potential
+      - AI Evaluation Report section placed BEFORE resume timeline in candidate-profile.tsx
+      - Overall Assessment: score (24px Space Grotesk) + reasoning text
+      - Dimension Score Bars: horizontal flat-end bars, industrial style
+        - Color-coded: #D4FF00 (80+), #FFB800 (50-79), #FF4444 (<50)
+        - Fixed-width labels (140px) for alignment, monospace score values
+      - Detailed Analysis: per-dimension reasoning in surface-secondary cards
+      - Strengths tags: accent-primary border/text (green tones)
+      - Skill Gaps tags: signal-danger border/text (red tones)
+      - Responsive: strengths/gaps side-by-side on md+, stacked on mobile
+      - Section headers: table-header style (11px uppercase letter-spacing 0.08em)
+      - data-testid attributes on all key elements
+      - No chart libraries — pure CSS score bars
 
   [ ] D-4  Pipeline stage transition buttons
       - Action bar with status flow buttons
