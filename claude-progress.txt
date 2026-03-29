@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-29
-Phase: 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4, A-2 complete, A-1/A-3 next)
+Phase: 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4, A-2, A-3 complete, A-1 next)
 
 ==============================================================================
 PHASE 0: PLANNING & SPECIFICATION
@@ -192,9 +192,19 @@ PHASE 5: AGENT CHAT — MODULE A (P0)
       - Both ChatSidebar and MobileChatView render ProgressIndicator for progress-type messages
       - Completion triggers a result summary message (prep for A-3 Action Card)
 
-  [ ] A-3  Structured Action Card output
-      - Action Card component (left accent border, buttons)
-      - Navigation from card to ranking view
+  [x] A-3  Structured Action Card output
+      - ActionCard component (src/components/chat/action-card.tsx)
+      - Left border: 4px accent-secondary (#00D4AA), surface-tertiary (#262626) background
+      - Title row: "Search Complete" in Space Grotesk bold, accent-secondary color, uppercase
+      - Summary text: describes candidates found and high-score count
+      - Key metrics: Total, High Score, Avg Score displayed as label/value pairs (monospace labels)
+      - "View Ranking" CTA button: pill-shaped, accent-primary bg, navigates to /job/[id]/pipeline
+      - ChatMessage type extended with "action-card" type and ActionCardData interface
+      - ActionCardData: title, summary, metrics[], actionLabel, actionHref
+      - use-chat.ts: progress completion now emits action-card message instead of plain text
+      - Both ChatSidebar and MobileChatView render ActionCard for action-card type messages
+      - Exported from components/chat/index.ts
+      - data-testid attributes on card, title, summary, metrics, CTA button
 
 ==============================================================================
 PHASE 6: P1 FEATURES

@@ -3,7 +3,7 @@
 import { useCallback, useRef } from "react";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { PROGRESS_STEPS } from "./chat-types";
-import type { ChatMessage } from "./chat-types";
+import type { ChatMessage, ActionCardData } from "./chat-types";
 
 /** Keywords that trigger the search progress sequence. */
 const SEARCH_KEYWORDS = [
@@ -90,16 +90,30 @@ export function useChat() {
               },
             });
 
-            // After completion, add a result message (prep for A-3 Action Card)
+            // After completion, add a structured Action Card
             if (isLast) {
               setTimeout(() => {
-                const resultMessage: ChatMessage = {
-                  id: `agent-${Date.now()}`,
-                  role: "agent",
-                  content: `Found 12 candidates matching your criteria with scores above 85%. Ready to review the shortlist.`,
-                  timestamp: new Date(),
+                const actionCardData: ActionCardData = {
+                  title: "Search Complete",
+                  summary:
+                    "Found 50 candidates. 12 scored above 85% for Senior Backend Engineer.",
+                  metrics: [
+                    { label: "Total", value: 50 },
+                    { label: "High Score", value: 12 },
+                    { label: "Avg Score", value: 74 },
+                  ],
+                  actionLabel: "View Ranking",
+                  actionHref: "/job/1/pipeline",
                 };
-                addChatMessage(resultMessage);
+                const actionCardMessage: ChatMessage = {
+                  id: `action-card-${Date.now()}`,
+                  role: "agent",
+                  content: "",
+                  timestamp: new Date(),
+                  type: "action-card",
+                  actionCard: actionCardData,
+                };
+                addChatMessage(actionCardMessage);
               }, 600);
             }
           }, delay);

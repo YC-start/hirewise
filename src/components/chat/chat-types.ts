@@ -24,16 +24,32 @@ export interface ProgressState {
   isComplete: boolean;
 }
 
+/** Data payload for structured Action Card messages. */
+export interface ActionCardData {
+  /** Card title, e.g., "Search Complete" */
+  title: string;
+  /** Summary text, e.g., "Found 50 candidates. 12 scored above 85%..." */
+  summary: string;
+  /** Key metrics displayed as label/value pairs. */
+  metrics: { label: string; value: string | number }[];
+  /** CTA button label, e.g., "View Ranking" */
+  actionLabel: string;
+  /** Navigation target for the CTA button. */
+  actionHref: string;
+}
+
 /** Shared chat message interface used by both desktop and mobile chat views. */
 export interface ChatMessage {
   id: string;
   role: "user" | "agent";
   content: string;
   timestamp: Date;
-  /** When type is "progress", the message renders a ProgressIndicator instead of a bubble. */
-  type?: "text" | "progress";
+  /** Message type determines rendering: text bubble, progress indicator, or action card. */
+  type?: "text" | "progress" | "action-card";
   /** Progress state — only present when type === "progress". */
   progress?: ProgressState;
+  /** Action card data — only present when type === "action-card". */
+  actionCard?: ActionCardData;
 }
 
 /** Welcome message shown when chat is first loaded. */
