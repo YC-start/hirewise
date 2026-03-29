@@ -36,13 +36,15 @@ export interface AIEvaluation {
   strengths: string[];
 }
 
+export type PipelineStatus = "New" | "Screening" | "Interview" | "Offer" | "Hired" | "Rejected" | "Archived";
+
 export interface Candidate {
   id: string;
   name: string;
   matchScore: number;
   skills: string[];
   subScores: SubScores;
-  pipelineStatus?: "New" | "Screening" | "Interview" | "Offer" | "Hired" | "Rejected";
+  pipelineStatus?: PipelineStatus;
   experience?: Experience[];
   education?: Education[];
   certifications?: string[];

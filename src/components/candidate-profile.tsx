@@ -1,13 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import type { Candidate, Experience, Education, AIEvaluation, DimensionScore } from "@/data/mock-candidates";
+import type { Candidate, Experience, Education, AIEvaluation, DimensionScore, PipelineStatus } from "@/data/mock-candidates";
 
 /**
- * CandidateProfile — Candidate detail page content (D-1).
+ * CandidateProfile — Candidate detail page content (D-1, D-2, D-4).
  *
  * Displays:
  * - Header: candidate name, match score (large + color-coded bar), pipeline status
+ * - Action bar: pipeline stage transition buttons (D-4)
+ * - AI Evaluation Report (D-2)
  * - Structured timeline: work experience in reverse chronological order
  * - Education section
  * - Certifications section (if present)
@@ -49,15 +52,76 @@ function getStatusBadgeClass(status: string): string {
       return "bg-signal-warning text-surface-primary";
     case "Rejected":
       return "bg-signal-danger text-surface-primary";
+    case "Archived":
+      return "bg-text-muted text-surface-primary";
     default:
       return "bg-text-secondary text-surface-primary";
+  }
+}
+
+/**
+ * Maps action buttons to the target pipeline status they set.
+ * Each button has a label, target status, and style configuration.
+ */
+interface ActionButtonConfig {
+  label: string;
+  targetStatus: PipelineStatus;
+  variant: "schedule-interview" | "reject" | "extend-offer" | "hire" | "archive";
+}
+
+const ACTION_BUTTONS: ActionButtonConfig[] = [
+  { label: "Schedule Interview", targetStatus: "Interview", variant: "schedule-interview" },
+  { label: "Reject", targetStatus: "Rejected", variant: "reject" },
+  { label: "Extend Offer", targetStatus: "Offer", variant: "extend-offer" },
+  { label: "Hire", targetStatus: "Hired", variant: "hire" },
+  { label: "Archive", targetStatus: "Archived", variant: "archive" },
+];
+
+/** Returns Tailwind classes for each action button variant. */
+function getActionButtonClasses(variant: ActionButtonConfig["variant"], isDisabled: boolean): string {
+  const base = "px-4 py-1.5 text-[13px] font-500 font-mono transition-all duration-150";
+
+  if (isDisabled) {
+    return `${base} rounded-full opacity-40 cursor-not-allowed bg-surface-tertiary text-text-muted`;
+  }
+
+  switch (variant) {
+    case "schedule-interview":
+      // accent-secondary (#00D4AA) bg, dark text, pill-shaped
+      return `${base} rounded-full bg-accent-secondary text-surface-primary hover:brightness-110 active:brightness-90`;
+    case "reject":
+      // signal-danger (#FF4444) bg, white text, pill-shaped
+      return `${base} rounded-full bg-signal-danger text-white hover:brightness-110 active:brightness-90`;
+    case "extend-offer":
+      // accent-primary (#D4FF00) bg, dark text, pill-shaped
+      return `${base} rounded-full bg-accent-primary text-surface-primary hover:brightness-110 active:brightness-90`;
+    case "hire":
+      // accent-primary (#D4FF00) bg, dark text, pill-shaped
+      return `${base} rounded-full bg-accent-primary text-surface-primary hover:brightness-110 active:brightness-90`;
+    case "archive":
+      // ghost button: transparent bg, border-default border, rectangular
+      return `${base} bg-transparent border border-border-default text-text-secondary hover:text-text-primary hover:border-text-secondary`;
+    default:
+      return base;
   }
 }
 
 export function CandidateProfile({ candidate, jobId, jobTitle }: CandidateProfileProps) {
   const scoreColor = getScoreColor(candidate.matchScore);
   const scoreTextClass = getScoreTextClass(candidate.matchScore);
-  const pipelineStatus = candidate.pipelineStatus || "New";
+  const initialStatus: PipelineStatus = candidate.pipelineStatus || "New";
+  const [currentStatus, setCurrentStatus] = useState<PipelineStatus>(initialStatus);
+
+  /** Determines if an action button should be disabled based on current status. */
+  function isButtonDisabled(targetStatus: PipelineStatus): boolean {
+    // If already at the target status, disable the button
+    if (currentStatus === targetStatus) return true;
+    // Map: which statuses correspond to which button being "already active"
+    // "Schedule Interview" -> disabled when status is "Interview"
+    // "Reject" -> disabled when status is "Rejected"
+    // etc. — this is already handled by direct comparison above.
+    return false;
+  }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden" data-testid="candidate-profile">
@@ -90,10 +154,10 @@ export function CandidateProfile({ candidate, jobId, jobTitle }: CandidateProfil
                 </h1>
                 <div className="flex items-center gap-3 flex-wrap">
                   <span
-                    className={`inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-500 uppercase tracking-wider ${getStatusBadgeClass(pipelineStatus)}`}
+                    className={`inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-500 uppercase tracking-wider ${getStatusBadgeClass(currentStatus)}`}
                     data-testid="pipeline-status-badge"
                   >
-                    {pipelineStatus}
+                    {currentStatus}
                   </span>
                   <span className="text-text-muted text-xs font-mono">
                     ID: {candidate.id}
@@ -111,6 +175,28 @@ export function CandidateProfile({ candidate, jobId, jobTitle }: CandidateProfil
                   {candidate.matchScore}
                 </span>
               </div>
+            </div>
+
+            {/* ── Action Buttons Bar (D-4) ─────────────────────────── */}
+            <div
+              className="mt-4 flex flex-wrap items-center gap-2"
+              data-testid="action-buttons-bar"
+            >
+              {ACTION_BUTTONS.map((btn) => {
+                const disabled = isButtonDisabled(btn.targetStatus);
+                return (
+                  <button
+                    key={btn.variant}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => setCurrentStatus(btn.targetStatus)}
+                    className={getActionButtonClasses(btn.variant, disabled)}
+                    data-testid={`action-btn-${btn.variant}`}
+                  >
+                    {btn.label}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Score bar */}

@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-29
-Phase: 4 — Candidate Profile (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2 complete, D-4 next)
+Phase: 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4 complete, A-1 next)
 
 ==============================================================================
 PHASE 0: PLANNING & SPECIFICATION
@@ -150,9 +150,23 @@ PHASE 4: CANDIDATE PROFILE — MODULE D (P0)
       - data-testid attributes on all key elements
       - No chart libraries — pure CSS score bars
 
-  [ ] D-4  Pipeline stage transition buttons
-      - Action bar with status flow buttons
-      - Status persistence and cross-page updates
+  [x] D-4  Pipeline stage transition buttons
+      - Action buttons bar in candidate header area (between name/score and score bar)
+      - Five action buttons: Schedule Interview, Reject, Extend Offer, Hire, Archive
+      - useState manages currentStatus; clicking a button updates status client-side
+      - Status badge auto-updates color and label on state change
+      - Button styling per spec:
+        - Schedule Interview: accent-secondary (#00D4AA) bg, dark text, pill-shaped (rounded-full)
+        - Reject: signal-danger (#FF4444) bg, white text, pill-shaped
+        - Extend Offer: accent-primary (#D4FF00) bg, dark text, pill-shaped
+        - Hire: accent-primary bg, dark text, pill-shaped
+        - Archive: ghost button (transparent bg, border-default border, rectangular)
+      - Current status disables corresponding button (opacity-40, cursor-not-allowed)
+      - Added "Archived" to PipelineStatus union type in mock-candidates.ts
+      - Exported PipelineStatus type for reuse
+      - Added "Archived" badge style (bg-text-muted) in getStatusBadgeClass
+      - Buttons grouped with gap-2, flex-wrap for responsive
+      - data-testid attributes on action bar and each button
 
 ==============================================================================
 PHASE 5: AGENT CHAT — MODULE A (P0)
