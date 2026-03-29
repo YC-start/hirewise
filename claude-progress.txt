@@ -264,6 +264,17 @@ PHASE 7: P2 — NON-FUNCTIONAL & POLISH
   [ ] I18N-1  Externalized strings for i18n readiness
 
 ==============================================================================
+HOTFIXES
+==============================================================================
+
+  [x] FIX: Tailwind v4 padding/margin utilities resolving to 0px (2026-03-29)
+      - Root cause: @theme inline in globals.css replaced the entire default theme,
+        wiping out the --spacing base unit (0.25rem) that p-*, m-*, etc. depend on.
+      - Fix: Added --spacing: 0.25rem to the @theme inline block.
+      - Verified: p-3=0.75rem, p-4=1rem, p-6=1.5rem, mb-6=1.5rem, mb-8=2rem, pl-8=2rem
+      - No regressions: colors, fonts, borders all unchanged.
+
+==============================================================================
 NOTES
 ==============================================================================
 
