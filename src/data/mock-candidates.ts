@@ -49,6 +49,12 @@ export interface Candidate {
   education?: Education[];
   certifications?: string[];
   aiEvaluation?: AIEvaluation;
+  /** Fields populated by Apollo/external API data (FLOW-2/3) */
+  headline?: string;
+  currentCompany?: string;
+  currentTitle?: string;
+  location?: string;
+  linkedinUrl?: string;
 }
 
 /**

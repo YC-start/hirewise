@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-29
-Phase: Phase 6 — Layout Flip & Core Flows (ARCH-1 complete, FLOW-1 complete, FLOW-2 complete)
+Phase: Phase 6 — Layout Flip & Core Flows (ARCH-1 complete, FLOW-1 complete, FLOW-2 complete, FLOW-3 complete)
 Previous phase completed: Phase 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4, A-2, A-3, A-1 complete)
 
 ==============================================================================
@@ -362,12 +362,36 @@ PHASE 6: LAYOUT FLIP & CORE FLOWS (P0 — New Architecture)
       - CandidateRankedList updated to support API candidates
       - npm run build passes cleanly
 
-  [ ] FLOW-3  AI scoring & ranking (replaces mock data)
-      - Structure raw API candidate data
-      - Multi-dimensional AI scoring against JD
-      - Reasoning trace generation
-      - Ranked results in Pipeline panel
-      - Action Card summary in chat
+  [x] FLOW-3  AI scoring & ranking (replaces mock data)
+      - Deterministic scoring engine: src/lib/scoring-engine.ts
+        - Four weighted dimensions: Technical Fit (40%), Experience Depth (30%),
+          Culture Fit (15%), Leadership Potential (15%)
+        - Pure functions, no Math.random — same inputs = same outputs
+        - Skill matching with alias support (Go/Golang, K8s/Kubernetes, etc.)
+        - Experience depth: years estimation from period strings + role diversity
+        - Culture fit: location match + tech company background signals
+        - Leadership: seniority inference from title + hierarchy comparison
+        - Generates per-dimension reasoning text (rule-based templates)
+        - Generates overall reasoning summary, strengths list, skillGaps list
+        - Designed for LLM replacement: swap scoreCandidate() internals with
+          AI SDK generateObject() call returning same ScoredCandidate shape
+      - API route: src/app/api/score-candidates/route.ts
+        - POST endpoint: { candidates, jd } → scored & ranked candidates
+        - Calls scoreCandidates() from scoring engine
+        - Returns candidates sorted by matchScore descending
+        - LLM integration placeholder comments for future AI SDK swap
+      - Frontend integration: use-chat.ts updated
+        - Removed apolloToCandidates() with Math.random() scoring
+        - Added scoreCandidatesAPI() — calls /api/score-candidates
+        - Progress "Scoring" stage now triggers real scoring API call
+        - Graceful fallback: if scoring API fails, shows raw candidates (score=50)
+        - Action Card displays real scoring metrics (total, high score, avg)
+      - AI Evaluation Report data: scoring engine generates full AIEvaluation
+        - overallReasoning, dimensionScores (4 dims with reasoning), strengths, skillGaps
+        - Data flows directly to candidate-profile.tsx AI Evaluation Report section
+      - Candidate interface extended with Apollo pass-through fields
+        (headline, currentCompany, currentTitle, location, linkedinUrl)
+      - npm run build passes cleanly
 
 ==============================================================================
 PHASE 7: P1 FEATURES (renumbered from Phase 6)

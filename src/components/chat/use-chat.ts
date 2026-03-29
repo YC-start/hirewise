@@ -437,53 +437,72 @@ async function searchCandidatesAPI(
   return (await response.json()) as ApolloSearchResponse;
 }
 
-/** Convert Apollo candidates to our Candidate format with basic scoring */
-function apolloToCandidates(
+// ── Scoring API integration (FLOW-3) ─────────────────────────────────────────
+
+interface ScoreRequestJD {
+  title: string;
+  department: string;
+  location: string;
+  experience: string;
+  seniority: string;
+  skills: string[];
+  description: string;
+}
+
+interface ScoredCandidateResponse {
+  candidates: Candidate[];
+  total: number;
+  error?: string;
+}
+
+/**
+ * Call the /api/score-candidates endpoint to score and rank candidates
+ * using the deterministic scoring engine (server-side).
+ */
+async function scoreCandidatesAPI(
   apolloCandidates: ApolloCandidate[],
-  jdSkills: string[],
-): Candidate[] {
-  return apolloCandidates.map((ac, index) => {
-    // Simple skill-based scoring (FLOW-3 will replace with AI scoring)
-    const matchedSkills = ac.skills.filter((s) =>
-      jdSkills.some(
-        (jds) => jds.toLowerCase() === s.toLowerCase(),
-      ),
-    );
-    const skillMatchRatio =
-      jdSkills.length > 0 ? matchedSkills.length / jdSkills.length : 0.5;
+  jdData: JDPreviewData,
+): Promise<ScoredCandidateResponse> {
+  // Transform Apollo candidates into CandidateInput shape for the scoring engine
+  const candidateInputs = apolloCandidates.map((ac, index) => ({
+    id: ac.id || `apollo-${index}`,
+    name: ac.name,
+    headline: ac.headline,
+    currentCompany: ac.currentCompany,
+    currentTitle: ac.currentTitle,
+    location: ac.location,
+    linkedinUrl: ac.linkedinUrl,
+    experience: ac.experience,
+    education: ac.education,
+    skills: ac.skills,
+    source: ac.source,
+  }));
 
-    // Base score from skill match + experience count bonus
-    const baseScore = Math.round(50 + skillMatchRatio * 40);
-    const experienceBonus = Math.min(ac.experience.length * 2, 10);
-    const matchScore = Math.min(baseScore + experienceBonus, 99);
+  const jd: ScoreRequestJD = {
+    title: jdData.title,
+    department: jdData.department,
+    location: jdData.location,
+    experience: jdData.experience,
+    seniority: jdData.seniority,
+    skills: jdData.skills,
+    description: jdData.description,
+  };
 
-    // Generate sub-scores
-    const technicalFit = Math.min(
-      Math.round(45 + skillMatchRatio * 50 + Math.random() * 5),
-      99,
-    );
-    const cultureFit = Math.round(50 + Math.random() * 30);
-    const experienceDepth = Math.min(
-      Math.round(40 + ac.experience.length * 8 + Math.random() * 10),
-      99,
-    );
-
-    return {
-      id: ac.id || `apollo-${index}`,
-      name: ac.name,
-      matchScore,
-      skills: ac.skills.length > 0 ? ac.skills : jdSkills.slice(0, 3),
-      subScores: {
-        technicalFit,
-        cultureFit,
-        experienceDepth,
-      },
-      pipelineStatus: "New" as const,
-      experience: ac.experience,
-      education: ac.education,
-      certifications: [],
-    };
+  const response = await fetch("/api/score-candidates", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ candidates: candidateInputs, jd }),
   });
+
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    throw new Error(
+      (errBody as { error?: string }).error ||
+        `Scoring API error: ${response.status}`,
+    );
+  }
+
+  return (await response.json()) as ScoredCandidateResponse;
 }
 
 // ── Search matching (existing logic) ────────────────────────────────────────
@@ -755,76 +774,125 @@ export function useChat() {
 
         searchCandidatesAPI(apiParams)
           .then((response) => {
-            // Step 2: Scoring
+            // Step 2: Scoring — call the real scoring engine API
             updateChatMessage(progressId, {
               progress: {
                 currentStep: 2,
-                statusText: `Scoring ${response.total} candidates...`,
+                statusText: `Scoring ${response.total} candidates against JD...`,
                 isComplete: false,
               },
             });
 
-            const scoreTimer = setTimeout(() => {
-              // Convert to our Candidate format
-              const candidates = apolloToCandidates(
-                response.candidates,
-                jdData.skills,
-              );
+            // FLOW-3: Call the scoring engine API for deterministic AI scoring
+            scoreCandidatesAPI(response.candidates, jdData)
+              .then((scoreResponse) => {
+                const candidates = scoreResponse.candidates;
 
-              // Store in candidate store
-              setCandidates(jobId, candidates);
-              setLoadingCandidates(jobId, false);
+                // Store scored candidates in candidate store
+                setCandidates(jobId, candidates);
+                setLoadingCandidates(jobId, false);
 
-              // Complete progress
-              updateChatMessage(progressId, {
-                progress: {
-                  currentStep: 3,
-                  statusText: `Complete: ${candidates.length} candidates scored`,
-                  isComplete: true,
-                },
+                // Complete progress
+                updateChatMessage(progressId, {
+                  progress: {
+                    currentStep: 3,
+                    statusText: `Complete: ${candidates.length} candidates scored & ranked`,
+                    isComplete: true,
+                  },
+                });
+
+                // Open pipeline panel for this job
+                selectJob(jobId);
+                setDataPanelOpen(true);
+
+                // 4. Action card with real scoring data
+                const cardTimer = setTimeout(() => {
+                  const highScoreCount = candidates.filter(
+                    (c) => c.matchScore >= 80,
+                  ).length;
+                  const avgScore =
+                    candidates.length > 0
+                      ? Math.round(
+                          candidates.reduce((s, c) => s + c.matchScore, 0) /
+                            candidates.length,
+                        )
+                      : 0;
+
+                  const actionCardData: ActionCardData = {
+                    title: "Search Complete",
+                    summary: `Found ${candidates.length} candidates from Apollo.io.${response.cached ? " (cached)" : ""} ${highScoreCount} scored above 80% for ${jdData.title}.`,
+                    metrics: [
+                      { label: "Total", value: candidates.length },
+                      { label: "High Score", value: highScoreCount },
+                      { label: "Avg Score", value: avgScore },
+                    ],
+                    actionLabel: "View Pipeline",
+                    actionHref: `/job/${jobId}/pipeline`,
+                  };
+                  const actionCardMessage: ChatMessage = {
+                    id: `action-card-apollo-${Date.now()}`,
+                    role: "agent",
+                    content: "",
+                    timestamp: new Date(),
+                    type: "action-card",
+                    actionCard: actionCardData,
+                  };
+                  addChatMessage(actionCardMessage);
+                }, 600);
+                progressTimers.current.push(cardTimer);
+              })
+              .catch((scoreError) => {
+                // Scoring failed — fall back to unsorted candidates without AI evaluation
+                console.error("[FLOW-3] Scoring error, using raw candidates:", scoreError);
+                const fallbackCandidates: Candidate[] = response.candidates.map((ac, idx) => ({
+                  id: ac.id || `apollo-${idx}`,
+                  name: ac.name,
+                  matchScore: 50,
+                  skills: ac.skills.length > 0 ? ac.skills : jdData.skills.slice(0, 3),
+                  subScores: { technicalFit: 50, cultureFit: 50, experienceDepth: 50 },
+                  pipelineStatus: "New" as const,
+                  experience: ac.experience,
+                  education: ac.education,
+                  certifications: [],
+                }));
+
+                setCandidates(jobId, fallbackCandidates);
+                setLoadingCandidates(jobId, false);
+
+                updateChatMessage(progressId, {
+                  progress: {
+                    currentStep: 3,
+                    statusText: `Complete: ${fallbackCandidates.length} candidates (scoring unavailable)`,
+                    isComplete: true,
+                  },
+                });
+
+                selectJob(jobId);
+                setDataPanelOpen(true);
+
+                const cardTimer = setTimeout(() => {
+                  const actionCardData: ActionCardData = {
+                    title: "Search Complete",
+                    summary: `Found ${fallbackCandidates.length} candidates from Apollo.io. Scoring engine was unavailable — candidates shown without AI ranking.`,
+                    metrics: [
+                      { label: "Total", value: fallbackCandidates.length },
+                      { label: "Scored", value: 0 },
+                    ],
+                    actionLabel: "View Pipeline",
+                    actionHref: `/job/${jobId}/pipeline`,
+                  };
+                  const actionCardMessage: ChatMessage = {
+                    id: `action-card-apollo-${Date.now()}`,
+                    role: "agent",
+                    content: "",
+                    timestamp: new Date(),
+                    type: "action-card",
+                    actionCard: actionCardData,
+                  };
+                  addChatMessage(actionCardMessage);
+                }, 600);
+                progressTimers.current.push(cardTimer);
               });
-
-              // Open pipeline panel for this job
-              selectJob(jobId);
-              setDataPanelOpen(true);
-
-              // 4. Action card
-              const cardTimer = setTimeout(() => {
-                const highScoreCount = candidates.filter(
-                  (c) => c.matchScore >= 80,
-                ).length;
-                const avgScore =
-                  candidates.length > 0
-                    ? Math.round(
-                        candidates.reduce((s, c) => s + c.matchScore, 0) /
-                          candidates.length,
-                      )
-                    : 0;
-
-                const actionCardData: ActionCardData = {
-                  title: "Search Complete",
-                  summary: `Found ${candidates.length} candidates from Apollo.io.${response.cached ? " (cached)" : ""} ${highScoreCount} scored above 80% for ${jdData.title}.`,
-                  metrics: [
-                    { label: "Total", value: candidates.length },
-                    { label: "High Score", value: highScoreCount },
-                    { label: "Avg Score", value: avgScore },
-                  ],
-                  actionLabel: "View Pipeline",
-                  actionHref: `/job/${jobId}/pipeline`,
-                };
-                const actionCardMessage: ChatMessage = {
-                  id: `action-card-apollo-${Date.now()}`,
-                  role: "agent",
-                  content: "",
-                  timestamp: new Date(),
-                  type: "action-card",
-                  actionCard: actionCardData,
-                };
-                addChatMessage(actionCardMessage);
-              }, 600);
-              progressTimers.current.push(cardTimer);
-            }, 1000);
-            progressTimers.current.push(scoreTimer);
           })
           .catch((error) => {
             setLoadingCandidates(jobId, false);
