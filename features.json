@@ -75,7 +75,7 @@
         "Verify the layout switches to a compact list/table format.",
         "Click the grid-view toggle to switch back and verify restoration."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "B-2",
@@ -92,7 +92,7 @@
         "Verify the high-score candidate count (score > 80%) is displayed.",
         "Verify the count of candidates in 'Interview Scheduled' state is displayed."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "C-1",

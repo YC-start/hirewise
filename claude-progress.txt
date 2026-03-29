@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-29
-Phase: 2 — Job Dashboard (LAYOUT-1 & LAYOUT-2 complete, B-1 next)
+Phase: 2 — Job Dashboard (LAYOUT-1, LAYOUT-2, B-1, B-2 complete, C-1 next)
 
 ==============================================================================
 PHASE 0: PLANNING & SPECIFICATION
@@ -44,13 +44,20 @@ PHASE 1: APP SHELL & DESIGN SYSTEM (P0 — Layout)
 PHASE 2: JOB DASHBOARD — MODULE B (P0)
 ==============================================================================
 
-  [ ] B-1  Job card grid / list view
+  [x] B-1  Job card grid / list view
       - /dashboard route with card grid (default) and list view
-      - View toggle component
+      - ViewToggle component with SquaresFour / ListBullets icons (Phosphor)
+      - Zustand store (dashboard-store.ts) for view mode state
+      - Grid view: responsive 1/2/3-column card grid
+      - List view: compact table with row-height 42px, alternating tint, table-header uppercase
+      - data-testid attributes on grid/list containers and toggle buttons
 
-  [ ] B-2  Job card data display
-      - Status badge component (Draft/Active/Paused/Closed)
-      - Metrics display: resume count, high-score count, interview count
+  [x] B-2  Job card data display
+      - StatusBadge component: Active=#D4FF00, Draft=#888888, Paused=#FFB800, Closed=#FF4444
+      - Job card shows: title, department, status badge, resume count, high-score (>80%), interviews
+      - List view rows show same data in tabular format with monospace numbers
+      - Stats summary row computed from mock data (open positions, total candidates, high scorers, interviews)
+      - Metric items with accent coloring for non-zero high-score counts
 
 ==============================================================================
 PHASE 3: CANDIDATE RANKING VIEW — MODULE C (P0)
