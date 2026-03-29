@@ -255,9 +255,18 @@ function scoreTechnicalFit(
         }
       }
     }
-    // Check text mention (experience descriptions, title, headline)
-    if (!found && candidateText.includes(jdNorm)) {
-      found = true;
+    // Check text mention using word boundary to avoid false positives (e.g. "go" in "django")
+    if (!found) {
+      try {
+        const escaped = jdNorm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const re = new RegExp(`\\b${escaped}\\b`, "i");
+        if (re.test(candidateText)) {
+          found = true;
+        }
+      } catch {
+        // Fallback for invalid regex
+        if (candidateText.includes(jdNorm)) found = true;
+      }
     }
 
     if (found) {
