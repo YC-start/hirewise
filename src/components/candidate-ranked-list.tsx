@@ -5,6 +5,8 @@ import { getCandidatesForJob } from "@/data/mock-candidates";
 import { useCandidateStore } from "@/stores/candidate-store";
 import type { Candidate } from "@/data/mock-candidates";
 
+const EMPTY_CANDIDATES: Candidate[] = [];
+
 /**
  * CandidateRankedList — Main panel component for the pipeline page (C-2).
  *
@@ -39,7 +41,7 @@ function getScoreTextClass(score: number): string {
 }
 
 export function CandidateRankedList({ jobId }: CandidateRankedListProps) {
-  const apiCandidates = useCandidateStore((s) => s.candidatesByJob[jobId] || []);
+  const apiCandidates = useCandidateStore((s) => s.candidatesByJob[jobId] ?? EMPTY_CANDIDATES);
   const candidates = apiCandidates.length > 0
     ? [...apiCandidates].sort((a, b) => b.matchScore - a.matchScore)
     : getCandidatesForJob(jobId);

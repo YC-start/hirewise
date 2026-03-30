@@ -6,7 +6,9 @@ import { useDataPanelStore } from "@/stores/data-panel-store";
 import { useDashboardStore } from "@/stores/dashboard-store";
 import { useCandidateStore } from "@/stores/candidate-store";
 import { getCandidateById } from "@/data/mock-candidates";
-import type { PipelineStatus, AIEvaluation, DimensionScore } from "@/data/mock-candidates";
+import type { Candidate, PipelineStatus, AIEvaluation, DimensionScore } from "@/data/mock-candidates";
+
+const EMPTY_CANDIDATES: Candidate[] = [];
 
 /**
  * ProfilePanelContent — Candidate profile detail embedded in right sidebar.
@@ -110,7 +112,7 @@ export function ProfilePanelContent() {
   }
 
   // Check candidate store (API results) first, then fall back to mock data
-  const apiCandidates = useCandidateStore((s) => s.candidatesByJob[selectedJobId] || []);
+  const apiCandidates = useCandidateStore((s) => s.candidatesByJob[selectedJobId] ?? EMPTY_CANDIDATES);
   const candidate = apiCandidates.find((c) => c.id === selectedCandidateId)
     || getCandidateById(selectedJobId, selectedCandidateId);
   const dashboardJobs = useDashboardStore((s) => s.jobs);

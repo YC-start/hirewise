@@ -31,12 +31,14 @@ function getScoreTextClass(score: number): string {
   return "text-score-low";
 }
 
+const EMPTY_CANDIDATES: Candidate[] = [];
+
 export function PipelinePanelContent() {
   const { selectedJobId, backToJobs, selectCandidate } = useDataPanelStore();
   const dashboardJobs = useDashboardStore((s) => s.jobs);
-  const apiCandidates = useCandidateStore((s) => s.candidatesByJob[selectedJobId || ""] || []);
-  const isLoading = useCandidateStore((s) => s.loadingJobs[selectedJobId || ""] || false);
-  const searchError = useCandidateStore((s) => s.errors[selectedJobId || ""] || null);
+  const apiCandidates = useCandidateStore((s) => s.candidatesByJob[selectedJobId || ""] ?? EMPTY_CANDIDATES);
+  const isLoading = useCandidateStore((s) => s.loadingJobs[selectedJobId || ""] ?? false);
+  const searchError = useCandidateStore((s) => s.errors[selectedJobId || ""] ?? null);
 
   if (!selectedJobId) {
     return (
