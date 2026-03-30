@@ -42,7 +42,10 @@ function getScoreTextClass(score: number): string {
 
 export function CandidateRankedList({ jobId }: CandidateRankedListProps) {
   const apiCandidates = useCandidateStore((s) => s.candidatesByJob[jobId] ?? EMPTY_CANDIDATES);
-  const candidates = apiCandidates.length > 0
+  const hasCandidatesBeenSet = useCandidateStore((s) => s.jobsWithCandidates[jobId] ?? false);
+  // Use API/refinement candidates if they've been explicitly set (even if empty after filtering),
+  // otherwise fall back to mock data for mock jobs that haven't been searched
+  const candidates = hasCandidatesBeenSet
     ? [...apiCandidates].sort((a, b) => b.matchScore - a.matchScore)
     : getCandidatesForJob(jobId);
 

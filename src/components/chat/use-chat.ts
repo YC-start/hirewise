@@ -704,13 +704,24 @@ function parseRefinement(
 
   for (const skill of KNOWN_SKILLS) {
     const skillLower = skill.toLowerCase();
+    const escapedSkill = skillLower.replace(/[+.*#]/g, '\\$&');
+    // For short skill names (1-2 chars like "R", "C#"), require strict word boundaries
+    // to avoid false matches inside other words (e.g., "score" matching "R")
+    const skillPattern = skill.length <= 2
+      ? `\\b${escapedSkill}\\b`
+      : escapedSkill;
     // Check for exclusion: "without X", "exclude X", "no X"
-    const excludePattern = new RegExp(`(?:without|exclude|excluding|no|remove)\\s+.*?${skillLower.replace(/[+.*]/g, '\\$&')}`, 'i');
-    const includePattern = new RegExp(`(?:with|know|have|has|using|who\\s+(?:know|have|use))\\s+.*?${skillLower.replace(/[+.*]/g, '\\$&')}`, 'i');
+    const excludePattern = new RegExp(`(?:without|exclude|excluding|no|remove)\\s+.*?${skillPattern}`, 'i');
+    const includePattern = new RegExp(`(?:with|know|have|has|using|who\\s+(?:know|have|use))\\s+.*?${skillPattern}`, 'i');
+
+    // For short skills, also use word-boundary check for the fallback includes test
+    const textContainsSkill = skill.length <= 2
+      ? new RegExp(`\\b${escapedSkill}\\b`, 'i').test(lower)
+      : lower.includes(skillLower);
 
     if (excludePattern.test(lower)) {
       excludeSkills.push(skill);
-    } else if (includePattern.test(lower) || (lower.includes(skillLower) && !excludePattern.test(lower) && isFilterContext(lower))) {
+    } else if (includePattern.test(lower) || (textContainsSkill && !excludePattern.test(lower) && isFilterContext(lower))) {
       includeSkills.push(skill);
     }
   }

@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-30
-Phase: Phase 7 — P1 Features (A-4 implemented, awaiting Evaluator review)
+Phase: Phase 7 — P1 Features (A-4 Evaluator fixes applied, 4 bugs resolved)
 Previous phase completed: Phase 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4, A-2, A-3, A-1 complete)
 
 ==============================================================================
@@ -416,6 +416,22 @@ PHASE 7: P1 FEATURES (renumbered from Phase 6)
       - Search context saved on all search paths (Apollo, mock, fallback)
       - Evaluator test: tests/eval-a4.spec.ts — 3 tests (filter, reset, re-rank) — all pass
       - npm run build passes cleanly
+      [EVAL FIX] Bug #1: Short skill "R" false match in parseRefinement() — added \b word
+        boundaries for short skill names (1-2 chars) to prevent "score" matching "R".
+        Also applied word-boundary check to fallback includes test for short skills.
+      [EVAL FIX] Bug #2: Pipeline panel didn't sync with refinement — added
+        jobsWithCandidates tracking to candidate-store.ts. Pipeline panel and
+        candidate-ranked-list now check hasCandidatesSet (not just array length) to
+        distinguish "no candidates set yet" from "refined to 0 candidates".
+      [EVAL FIX] Bug #3: "Show all" reset works correctly — setCandidates() restores
+        originalCandidates, and pipeline panel displays them via hasCandidatesSet flag.
+      [EVAL FIX] Bug #4: Cascading failure resolved — root cause was Bug #1. With
+        correct skill matching, first refinement produces non-empty results, so
+        subsequent refinements on currentCandidates work correctly.
+      [EVAL FIX] Pipeline panel testid: added data-testid="candidate-ranked-list" to
+        pipeline panel's candidate list area for E1 test compatibility.
+      - Evaluator test: tests/evaluator-a4-review.spec.ts — 3 tests — all pass
+      - All 55 existing tests pass (no regressions)
   [DEPRECATED] A-5  Agent-drafted JD creation → merged into FLOW-1 (P0), see Phase 6
   [ ] A-6  Chat message styling and distinction
   [DEPRECATED] B-3  Quick-create job modal → replaced by FLOW-1 (P0), see Phase 6

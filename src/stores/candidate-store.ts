@@ -11,6 +11,8 @@ import type { Candidate } from "@/data/mock-candidates";
 interface CandidateStoreState {
   /** Map of jobId -> candidate array (from Apollo API or other external sources) */
   candidatesByJob: Record<string, Candidate[]>;
+  /** Set of jobIds that have had candidates explicitly set (even if empty, e.g. after refinement filtering) */
+  jobsWithCandidates: Record<string, boolean>;
   /** Whether a search is currently in progress for a job */
   loadingJobs: Record<string, boolean>;
   /** Error messages keyed by jobId */
@@ -26,16 +28,20 @@ interface CandidateStoreState {
   getCandidates: (jobId: string) => Candidate[];
   /** Check if a job has API-sourced candidates */
   hasApiCandidates: (jobId: string) => boolean;
+  /** Check if candidates have been explicitly set for a job (even if empty) */
+  hasCandidatesSet: (jobId: string) => boolean;
 }
 
 export const useCandidateStore = create<CandidateStoreState>((set, get) => ({
   candidatesByJob: {},
+  jobsWithCandidates: {},
   loadingJobs: {},
   errors: {},
 
   setCandidates: (jobId, candidates) =>
     set((state) => ({
       candidatesByJob: { ...state.candidatesByJob, [jobId]: candidates },
+      jobsWithCandidates: { ...state.jobsWithCandidates, [jobId]: true },
     })),
 
   setLoading: (jobId, loading) =>
@@ -54,5 +60,9 @@ export const useCandidateStore = create<CandidateStoreState>((set, get) => ({
 
   hasApiCandidates: (jobId) => {
     return (get().candidatesByJob[jobId] || []).length > 0;
+  },
+
+  hasCandidatesSet: (jobId) => {
+    return get().jobsWithCandidates[jobId] === true;
   },
 }));

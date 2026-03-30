@@ -37,6 +37,7 @@ export function PipelinePanelContent() {
   const { selectedJobId, backToJobs, selectCandidate } = useDataPanelStore();
   const dashboardJobs = useDashboardStore((s) => s.jobs);
   const apiCandidates = useCandidateStore((s) => s.candidatesByJob[selectedJobId || ""] ?? EMPTY_CANDIDATES);
+  const hasCandidatesBeenSet = useCandidateStore((s) => s.jobsWithCandidates[selectedJobId || ""] ?? false);
   const isLoading = useCandidateStore((s) => s.loadingJobs[selectedJobId || ""] ?? false);
   const searchError = useCandidateStore((s) => s.errors[selectedJobId || ""] ?? null);
 
@@ -68,8 +69,9 @@ export function PipelinePanelContent() {
     );
   }
 
-  // Use API candidates if available, otherwise fall back to mock
-  const candidates = apiCandidates.length > 0
+  // Use API/refinement candidates if they've been explicitly set (even if empty after filtering),
+  // otherwise fall back to mock data for mock jobs that haven't been searched
+  const candidates = hasCandidatesBeenSet
     ? [...apiCandidates].sort((a, b) => b.matchScore - a.matchScore)
     : getCandidatesForJob(selectedJobId);
 
@@ -129,7 +131,8 @@ export function PipelinePanelContent() {
       </div>
 
       {/* Candidate rows */}
-      <div className="flex-1 overflow-y-auto" data-testid="pipeline-candidate-list">
+      <div className="flex-1 overflow-y-auto" data-testid="candidate-ranked-list">
+       <div data-testid="pipeline-candidate-list" className="h-full">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-full gap-2">
             <CircleNotch size={20} weight="bold" className="text-accent-primary animate-spin" />
@@ -154,6 +157,7 @@ export function PipelinePanelContent() {
             />
           ))
         )}
+       </div>
       </div>
     </div>
   );
