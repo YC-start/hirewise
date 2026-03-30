@@ -117,6 +117,7 @@ export function ProfilePanelContent() {
     || getCandidateById(selectedJobId, selectedCandidateId);
   const dashboardJobs = useDashboardStore((s) => s.jobs);
   const job = dashboardJobs.find((j) => j.id === selectedJobId);
+  const isJobClosed = job?.status === "Closed";
 
   if (!candidate) {
     return (
@@ -131,6 +132,7 @@ export function ProfilePanelContent() {
       candidate={candidate}
       jobTitle={job?.title || "Unknown"}
       onBack={backToPipeline}
+      frozen={isJobClosed}
     />
   );
 }
@@ -139,6 +141,7 @@ function ProfileContent({
   candidate,
   jobTitle,
   onBack,
+  frozen,
 }: {
   candidate: {
     id: string;
@@ -154,6 +157,7 @@ function ProfileContent({
   };
   jobTitle: string;
   onBack: () => void;
+  frozen?: boolean;
 }) {
   const scoreColor = getScoreColor(candidate.matchScore);
   const scoreTextClass = getScoreTextClass(candidate.matchScore);
@@ -232,21 +236,27 @@ function ProfileContent({
           className="flex flex-wrap gap-1.5 mb-3 pb-3 border-b border-border-default"
           data-testid="action-buttons-bar"
         >
-          {ACTION_BUTTONS.map((btn) => {
-            const disabled = currentStatus === btn.targetStatus;
-            return (
-              <button
-                key={btn.variant}
-                type="button"
-                disabled={disabled}
-                onClick={() => setCurrentStatus(btn.targetStatus)}
-                className={getActionButtonClasses(btn.variant, disabled)}
-                data-testid={`action-btn-${btn.variant}`}
-              >
-                {btn.label}
-              </button>
-            );
-          })}
+          {frozen ? (
+            <span className="text-[11px] font-mono text-text-muted" data-testid="actions-frozen-label">
+              Actions disabled — job is closed
+            </span>
+          ) : (
+            ACTION_BUTTONS.map((btn) => {
+              const disabled = currentStatus === btn.targetStatus;
+              return (
+                <button
+                  key={btn.variant}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => setCurrentStatus(btn.targetStatus)}
+                  className={getActionButtonClasses(btn.variant, disabled)}
+                  data-testid={`action-btn-${btn.variant}`}
+                >
+                  {btn.label}
+                </button>
+              );
+            })
+          )}
         </div>
 
         {/* Skills */}

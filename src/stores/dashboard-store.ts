@@ -14,6 +14,8 @@ interface DashboardState {
   setViewMode: (mode: ViewMode) => void;
   /** Add a new job to the list */
   addJob: (job: Job) => void;
+  /** Update a job's status (e.g., Close or Archive a job) */
+  updateJobStatus: (jobId: string, status: Job["status"]) => void;
   /** Open the quick-create modal */
   openCreateModal: () => void;
   /** Close the quick-create modal */
@@ -26,6 +28,12 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   isCreateModalOpen: false,
   setViewMode: (mode) => set({ viewMode: mode }),
   addJob: (job) => set((state) => ({ jobs: [job, ...state.jobs] })),
+  updateJobStatus: (jobId, status) =>
+    set((state) => ({
+      jobs: state.jobs.map((j) =>
+        j.id === jobId ? { ...j, status } : j,
+      ),
+    })),
   openCreateModal: () => set({ isCreateModalOpen: true }),
   closeCreateModal: () => set({ isCreateModalOpen: false }),
 }));

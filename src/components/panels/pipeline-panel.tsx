@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Users, CircleNotch } from "@phosphor-icons/react";
+import { ArrowLeft, Users, CircleNotch, Snowflake } from "@phosphor-icons/react";
 import { useDataPanelStore } from "@/stores/data-panel-store";
 import { useDashboardStore } from "@/stores/dashboard-store";
 import { useCandidateStore } from "@/stores/candidate-store";
@@ -75,6 +75,8 @@ export function PipelinePanelContent() {
     ? [...apiCandidates].sort((a, b) => b.matchScore - a.matchScore)
     : getCandidatesForJob(selectedJobId);
 
+  const isFrozen = job.status === "Closed";
+
   return (
     <div className="flex flex-col h-full overflow-hidden" data-testid="pipeline-panel">
       {/* Header */}
@@ -97,6 +99,20 @@ export function PipelinePanelContent() {
           <span className="font-mono">{candidates.length}</span>
         </div>
       </div>
+
+      {/* Frozen banner for closed jobs */}
+      {isFrozen && (
+        <div
+          className="flex-shrink-0 flex items-center gap-2 px-3 py-2 border-b border-signal-danger/30"
+          style={{ backgroundColor: "rgba(255, 68, 68, 0.08)" }}
+          data-testid="pipeline-frozen-banner"
+        >
+          <Snowflake size={14} weight="bold" className="text-signal-danger flex-shrink-0" />
+          <span className="text-[11px] font-mono text-signal-danger">
+            Pipeline frozen — this job is closed
+          </span>
+        </div>
+      )}
 
       {/* Compact JD tags */}
       {job.jd && (
@@ -153,7 +169,8 @@ export function PipelinePanelContent() {
               candidate={candidate}
               rank={index + 1}
               isOdd={index % 2 === 1}
-              onSelect={() => selectCandidate(selectedJobId, candidate.id)}
+              onSelect={() => !isFrozen && selectCandidate(selectedJobId, candidate.id)}
+              frozen={isFrozen}
             />
           ))
         )}
@@ -170,11 +187,13 @@ function CandidateRowCompact({
   rank,
   isOdd,
   onSelect,
+  frozen,
 }: {
   candidate: Candidate;
   rank: number;
   isOdd: boolean;
   onSelect: () => void;
+  frozen?: boolean;
 }) {
   const scoreColor = getScoreColor(candidate.matchScore);
   const scoreTextClass = getScoreTextClass(candidate.matchScore);
@@ -182,9 +201,12 @@ function CandidateRowCompact({
   return (
     <button
       onClick={onSelect}
-      className={`w-full flex items-center h-[38px] px-3 border-b border-border-default cursor-pointer transition-colors hover:bg-surface-tertiary text-left ${
-        isOdd ? "bg-surface-tertiary/30" : "bg-transparent"
-      }`}
+      disabled={frozen}
+      className={`w-full flex items-center h-[38px] px-3 border-b border-border-default transition-colors text-left ${
+        frozen
+          ? "cursor-default opacity-70"
+          : "cursor-pointer hover:bg-surface-tertiary"
+      } ${isOdd ? "bg-surface-tertiary/30" : "bg-transparent"}`}
       data-testid={`candidate-row-${candidate.id}`}
     >
       {/* Rank */}

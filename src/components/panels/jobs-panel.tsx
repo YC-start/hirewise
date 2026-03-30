@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import {
   Briefcase,
   Users,
@@ -8,6 +9,9 @@ import {
   SquaresFour,
   ListBullets,
   ChatCircleDots,
+  DotsThreeVertical,
+  Archive,
+  XCircle,
 } from "@phosphor-icons/react";
 import { useDashboardStore } from "@/stores/dashboard-store";
 import { useDataPanelStore } from "@/stores/data-panel-store";
@@ -28,12 +32,32 @@ import {
  * FLOW-1: The "+ New Job" button now focuses the chat input with a suggested
  * prompt instead of opening the deprecated B-3 modal. On mobile, it switches
  * to the chat tab.
+ *
+ * B-4: Closed/Archived jobs are visually demoted (opacity-50) and sorted to bottom.
+ *      Context menu (three-dot) on each card allows Close/Archive actions.
  */
+
+/** Sort jobs so Closed are pushed to the bottom, preserving order otherwise. */
+function sortJobsWithClosedLast(jobs: Job[]): Job[] {
+  const active: Job[] = [];
+  const closed: Job[] = [];
+  for (const job of jobs) {
+    if (job.status === "Closed") {
+      closed.push(job);
+    } else {
+      active.push(job);
+    }
+  }
+  return [...active, ...closed];
+}
+
 export function JobsPanelContent() {
-  const { viewMode, setViewMode, jobs } = useDashboardStore();
+  const { viewMode, setViewMode, jobs, updateJobStatus } = useDashboardStore();
   const { selectJob } = useDataPanelStore();
   const { setMobileActiveTab } = useSidebarStore();
   const stats = computeStats(jobs);
+
+  const sortedJobs = sortJobsWithClosedLast(jobs);
 
   const handleNewJob = () => {
     // On mobile, switch to chat tab
@@ -94,17 +118,22 @@ export function JobsPanelContent() {
             className="flex flex-col gap-2"
             data-testid="job-grid-view"
           >
-            {jobs.map((job) => (
+            {sortedJobs.map((job) => (
               <JobCardCompact
                 key={job.id}
                 job={job}
                 onSelect={() => selectJob(job.id)}
+                onUpdateStatus={(status) => updateJobStatus(job.id, status)}
               />
             ))}
           </div>
         ) : (
           <div data-testid="job-list-view">
-            <JobListCompact jobs={jobs} onSelectJob={(id) => selectJob(id)} />
+            <JobListCompact
+              jobs={sortedJobs}
+              onSelectJob={(id) => selectJob(id)}
+              onUpdateStatus={(id, status) => updateJobStatus(id, status)}
+            />
           </div>
         )}
       </div>
@@ -192,49 +221,142 @@ function MiniStatCard({
   );
 }
 
+// ── Job Context Menu ──────────────────────────────────────────────────────
+
+function JobContextMenu({
+  job,
+  onUpdateStatus,
+}: {
+  job: Job;
+  onUpdateStatus: (status: Job["status"]) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
+  // Don't show the menu for already-closed jobs
+  if (job.status === "Closed") return null;
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
+        className="flex items-center justify-center w-6 h-6 text-text-muted hover:text-text-primary transition-colors"
+        aria-label="Job actions"
+        data-testid={`job-context-menu-${job.id}`}
+      >
+        <DotsThreeVertical size={16} weight="bold" />
+      </button>
+      {isOpen && (
+        <div
+          className="absolute right-0 top-7 z-50 min-w-[140px] border border-border-default bg-surface-secondary shadow-lg"
+          style={{ borderRadius: "4px" }}
+          data-testid={`job-context-dropdown-${job.id}`}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onUpdateStatus("Closed");
+              setIsOpen(false);
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-text-primary hover:bg-surface-tertiary transition-colors"
+            data-testid={`job-close-btn-${job.id}`}
+          >
+            <XCircle size={14} weight="bold" className="text-signal-danger" />
+            Close Job
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onUpdateStatus("Closed");
+              setIsOpen(false);
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-text-primary hover:bg-surface-tertiary transition-colors border-t border-border-default"
+            data-testid={`job-archive-btn-${job.id}`}
+          >
+            <Archive size={14} weight="bold" className="text-text-muted" />
+            Archive Job
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Job Card Compact (Grid) ─────────────────────────────────────────────────
 
 function JobCardCompact({
   job,
   onSelect,
+  onUpdateStatus,
 }: {
   job: Job;
   onSelect: () => void;
+  onUpdateStatus: (status: Job["status"]) => void;
 }) {
+  const isClosed = job.status === "Closed";
+
   return (
-    <button
-      onClick={onSelect}
-      className="w-full text-left border border-border-default bg-surface-tertiary/30 p-3 hover:bg-surface-tertiary transition-colors cursor-pointer group"
+    <div
+      className={`relative w-full text-left border border-border-default bg-surface-tertiary/30 p-3 transition-all cursor-pointer group ${
+        isClosed ? "opacity-50" : "hover:bg-surface-tertiary"
+      }`}
       data-testid={`job-card-${job.id}`}
+      data-job-status={job.status}
     >
-      <div className="flex items-start justify-between mb-2">
-        <div className="min-w-0 flex-1">
-          <h3 className="font-heading text-sm font-700 text-text-primary group-hover:text-accent-primary transition-colors truncate">
-            {job.title}
-          </h3>
-          <p className="text-text-secondary text-[11px] mt-0.5">{job.department}</p>
+      <button
+        onClick={onSelect}
+        className="w-full text-left"
+      >
+        <div className="flex items-start justify-between mb-2">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-heading text-sm font-700 text-text-primary group-hover:text-accent-primary transition-colors truncate">
+              {job.title}
+            </h3>
+            <p className="text-text-secondary text-[11px] mt-0.5">{job.department}</p>
+          </div>
+          <div className="flex items-center gap-1">
+            <StatusBadge status={job.status} />
+          </div>
         </div>
-        <StatusBadge status={job.status} />
+        <div className="flex items-center gap-3 pt-2 border-t border-border-default">
+          <MetricItem
+            icon={<Users size={12} weight="bold" />}
+            value={job.resumes}
+            label="Res"
+          />
+          <MetricItem
+            icon={<Star size={12} weight="bold" />}
+            value={job.highScore}
+            label=">80%"
+            accent={job.highScore > 0}
+          />
+          <MetricItem
+            icon={<CalendarCheck size={12} weight="bold" />}
+            value={job.interviews}
+            label="Int"
+          />
+        </div>
+      </button>
+      {/* Context menu positioned in top-right corner */}
+      <div className="absolute top-2 right-2">
+        <JobContextMenu job={job} onUpdateStatus={onUpdateStatus} />
       </div>
-      <div className="flex items-center gap-3 pt-2 border-t border-border-default">
-        <MetricItem
-          icon={<Users size={12} weight="bold" />}
-          value={job.resumes}
-          label="Res"
-        />
-        <MetricItem
-          icon={<Star size={12} weight="bold" />}
-          value={job.highScore}
-          label=">80%"
-          accent={job.highScore > 0}
-        />
-        <MetricItem
-          icon={<CalendarCheck size={12} weight="bold" />}
-          value={job.interviews}
-          label="Int"
-        />
-      </div>
-    </button>
+    </div>
   );
 }
 
@@ -286,9 +408,11 @@ function MetricItem({
 function JobListCompact({
   jobs,
   onSelectJob,
+  onUpdateStatus,
 }: {
   jobs: Job[];
   onSelectJob: (id: string) => void;
+  onUpdateStatus: (id: string, status: Job["status"]) => void;
 }) {
   return (
     <div className="border border-border-default bg-surface-tertiary/30 overflow-hidden">
@@ -300,34 +424,51 @@ function JobListCompact({
         <span className="flex-1 table-header">Position</span>
         <span className="w-16 table-header text-center">Status</span>
         <span className="w-12 table-header text-right">Res</span>
+        <span className="w-8" />
       </div>
 
       {/* Rows */}
-      {jobs.map((job, idx) => (
-        <button
-          key={job.id}
-          onClick={() => onSelectJob(job.id)}
-          className={`w-full flex items-center px-3 border-b border-border-default last:border-b-0 hover:bg-surface-tertiary transition-colors cursor-pointer text-left ${
-            idx % 2 === 1 ? "bg-surface-tertiary/30" : ""
-          }`}
-          style={{ height: "var(--row-height)" }}
-          data-testid={`job-row-${job.id}`}
-        >
-          <div className="flex-1 min-w-0">
-            <span className="font-heading text-xs font-700 text-text-primary truncate block">
-              {job.title}
-            </span>
+      {jobs.map((job, idx) => {
+        const isClosed = job.status === "Closed";
+        return (
+          <div
+            key={job.id}
+            className={`w-full flex items-center px-3 border-b border-border-default last:border-b-0 transition-colors text-left ${
+              isClosed
+                ? "opacity-50"
+                : idx % 2 === 1
+                  ? "bg-surface-tertiary/30 hover:bg-surface-tertiary"
+                  : "hover:bg-surface-tertiary"
+            }`}
+            style={{ height: "var(--row-height)" }}
+            data-testid={`job-row-${job.id}`}
+            data-job-status={job.status}
+          >
+            <button
+              onClick={() => onSelectJob(job.id)}
+              className="flex-1 min-w-0 cursor-pointer h-full flex items-center"
+            >
+              <span className="font-heading text-xs font-700 text-text-primary truncate block">
+                {job.title}
+              </span>
+            </button>
+            <div className="w-16 flex justify-center">
+              <StatusBadge status={job.status} />
+            </div>
+            <div className="w-12 text-right">
+              <span className="font-mono text-xs font-500 text-text-primary">
+                {job.resumes}
+              </span>
+            </div>
+            <div className="w-8 flex justify-center">
+              <JobContextMenu
+                job={job}
+                onUpdateStatus={(status) => onUpdateStatus(job.id, status)}
+              />
+            </div>
           </div>
-          <div className="w-16 flex justify-center">
-            <StatusBadge status={job.status} />
-          </div>
-          <div className="w-12 text-right">
-            <span className="font-mono text-xs font-500 text-text-primary">
-              {job.resumes}
-            </span>
-          </div>
-        </button>
-      ))}
+        );
+      })}
     </div>
   );
 }

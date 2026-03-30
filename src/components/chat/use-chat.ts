@@ -359,6 +359,24 @@ function generateDescription(
   return `We are looking for a ${title} (${locationPhrase}) with ${experience} of relevant experience. The ideal candidate has strong expertise in ${skillsList}. This role is part of the ${department} team and offers an opportunity to make significant impact in a fast-growing organization.`;
 }
 
+// ── Close/Archive job intent detection ───────────────────────────────────────
+
+/** Patterns that indicate the user wants to close or archive a job. */
+const CLOSE_JOB_PATTERNS = [
+  /\b(close|shut|end|finish|wrap\s+up)\s+(this\s+)?(job|position|role|opening)\b/i,
+  /\b(archive)\s+(this\s+)?(job|position|role|opening)\b/i,
+  /\b(mark)\s+(this\s+)?(job|position|role)\s+(as\s+)?(closed|archived|done|finished)\b/i,
+  /\b(close|archive)\s+the\s+(job|position|role)\b/i,
+  /关闭.*职位/,
+  /归档.*职位/,
+  /关闭.*岗位/,
+  /归档.*岗位/,
+];
+
+function isCloseJobIntent(text: string): boolean {
+  return CLOSE_JOB_PATTERNS.some((p) => p.test(text));
+}
+
 // ── Confirmation intent detection ────────────────────────────────────────────
 
 /** Keywords that indicate user is confirming a suggested action (e.g., "yes, search candidates") */
@@ -871,8 +889,10 @@ export function useChat() {
   const { chatMessages, addChatMessage, updateChatMessage } =
     useSidebarStore();
   const addJob = useDashboardStore((s) => s.addJob);
+  const updateJobStatus = useDashboardStore((s) => s.updateJobStatus);
   const dashboardJobs = useDashboardStore((s) => s.jobs);
   const selectJob = useDataPanelStore((s) => s.selectJob);
+  const selectedJobId = useDataPanelStore((s) => s.selectedJobId);
   const setDataPanelOpen = useDataPanelStore((s) => s.setDataPanelOpen);
   const setCandidates = useCandidateStore((s) => s.setCandidates);
   const getCandidates = useCandidateStore((s) => s.getCandidates);
@@ -1217,6 +1237,54 @@ export function useChat() {
         timestamp: new Date(),
       };
       addChatMessage(userMessage);
+
+      // ── B-4: Close/Archive job intent ─────────────────────────────────
+      if (isCloseJobIntent(trimmed)) {
+        // Find the target job: use the currently selected job, or search context job
+        const targetJobId = selectedJobId
+          || searchContextRef.current?.jobId
+          || null;
+
+        if (targetJobId) {
+          const targetJob = dashboardJobs.find((j) => j.id === targetJobId);
+          if (targetJob && targetJob.status !== "Closed") {
+            updateJobStatus(targetJobId, "Closed");
+
+            const closeMsg: ChatMessage = {
+              id: `close-job-${Date.now()}`,
+              role: "agent",
+              content: `Done. "${targetJob.title}" has been closed. The pipeline is now frozen and all data is preserved. The job card is visually demoted on the dashboard.`,
+              timestamp: new Date(),
+            };
+            addChatMessage(closeMsg);
+          } else if (targetJob && targetJob.status === "Closed") {
+            const alreadyMsg: ChatMessage = {
+              id: `already-closed-${Date.now()}`,
+              role: "agent",
+              content: `"${targetJob.title}" is already closed.`,
+              timestamp: new Date(),
+            };
+            addChatMessage(alreadyMsg);
+          } else {
+            const notFoundMsg: ChatMessage = {
+              id: `no-job-${Date.now()}`,
+              role: "agent",
+              content: "I couldn't find the job to close. Please select a job from the Jobs panel first.",
+              timestamp: new Date(),
+            };
+            addChatMessage(notFoundMsg);
+          }
+        } else {
+          const noSelectionMsg: ChatMessage = {
+            id: `no-selection-${Date.now()}`,
+            role: "agent",
+            content: "No job is currently selected. Please select a job from the Jobs panel, then ask me to close it.",
+            timestamp: new Date(),
+          };
+          addChatMessage(noSelectionMsg);
+        }
+        return;
+      }
 
       // ── FLOW-1: Job creation intent ───────────────────────────────────
       if (isJobCreationIntent(trimmed)) {
