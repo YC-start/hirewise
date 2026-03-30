@@ -404,7 +404,7 @@
         "Verify both message types are rectangular (no speech-bubble tails).",
         "Verify no border-radius exceeds 4px."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "NAV-1",
