@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-30
-Phase: Phase 7 — P1 Features (A-4 Evaluator fixes applied, 4 bugs resolved)
+Phase: Phase 7 — P1 Features (A-4 complete, A-6 complete)
 Previous phase completed: Phase 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4, A-2, A-3, A-1 complete)
 
 ==============================================================================
@@ -433,7 +433,17 @@ PHASE 7: P1 FEATURES (renumbered from Phase 6)
       - Evaluator test: tests/evaluator-a4-review.spec.ts — 3 tests — all pass
       - All 55 existing tests pass (no regressions)
   [DEPRECATED] A-5  Agent-drafted JD creation → merged into FLOW-1 (P0), see Phase 6
-  [ ] A-6  Chat message styling and distinction
+  [x] A-6  Chat message styling and distinction
+      - Fixed user message bubble: explicit #D4FF00 background with #0D0D0D dark text
+        (was transparent due to Tailwind utility class not resolving)
+      - Agent message bubble: explicit #1A1A1A background with #E8E8E8 text
+      - Both bubble types: rectangular with 4px border-radius, no speech-bubble tails
+      - Used inline styles for critical colors to guarantee rendering regardless of
+        Tailwind class resolution issues
+      - Avatar icons also styled with matching color scheme
+      - Agent bubble retains 1px #333333 border for subtle definition
+      - Evaluator test: tests/eval-a6.spec.ts — 3 tests — all pass
+      - All 64 existing tests pass (no regressions)
   [DEPRECATED] B-3  Quick-create job modal → replaced by FLOW-1 (P0), see Phase 6
       - Previous implementation preserved in git history but code to be REMOVED
       - Was: Radix UI Dialog-based modal triggered by "+ New Job" button
