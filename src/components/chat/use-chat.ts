@@ -602,6 +602,248 @@ function buildAcknowledgement(query: string, jobTitle: string): string {
   return `Got it! Searching candidates for the ${jobTitle} role...`;
 }
 
+// ── Refinement intent detection (A-4) ───────────────────────────────────────
+
+/** Patterns that indicate the user wants to refine/filter the current search results. */
+const REFINEMENT_PATTERNS = [
+  // Filter by attribute
+  /\b(show|display|list)\s+(me\s+)?(only|just)\b/i,
+  /\b(only|just)\s+(show|display|list|include|keep)\b/i,
+  /\bfilter\s+(by|for|to|out)\b/i,
+  /\bnarrow\s+(down|it|results|to)\b/i,
+  /\bexclude\b/i,
+  /\bremove\b.*\b(candidate|anyone|those|them)\b/i,
+  /\bwithout\b/i,
+  /\bwith\s+(at\s+least|more\s+than|over)/i,
+  // Score thresholds
+  /\b(minimum|min)\s+score\b/i,
+  /\bscore\s*(above|over|>=?|higher\s+than|at\s+least)\s*\d+/i,
+  /\babove\s+\d+/i,
+  /\bbelow\s+\d+/i,
+  /\bhigher\s+than\s+\d+/i,
+  // Re-ranking
+  /\b(re-?rank|resort|re-?sort|sort\s+by|rank\s+by|order\s+by)\b/i,
+  // Top N
+  /\b(top|best|highest)\s+\d+/i,
+  /\bfirst\s+\d+/i,
+  // Contextual refinement
+  /\b(startup|enterprise|big\s+tech|faang|fortune\s+500)\s+(experience|background)\b/i,
+  /\bcs\s+degree\b/i,
+  /\bcomputer\s+science\b/i,
+  /\bmaster'?s?\b/i,
+  /\bphd\b/i,
+  /\b(located|based)\s+in\b/i,
+  // Chinese refinement patterns
+  /只(看|显示|保留|要)/,
+  /排除/,
+  /筛选/,
+  /重新排序/,
+  /最低分/,
+  /分数.*以上/,
+  /前\d+名/,
+];
+
+/** Check if user input is a refinement of existing search results. */
+function isRefinementIntent(text: string): boolean {
+  return REFINEMENT_PATTERNS.some((p) => p.test(text));
+}
+
+/** Search context for tracking the active search state across follow-up messages. */
+interface SearchContext {
+  jobId: string;
+  jdData: JDPreviewData;
+  /** The full set of candidates from the original search (before any refinements) */
+  originalCandidates: Candidate[];
+  /** The currently displayed (possibly filtered/re-ranked) candidates */
+  currentCandidates: Candidate[];
+}
+
+/**
+ * Parse a refinement query and return a filter/sort function.
+ * Returns a description of what was applied for the agent response.
+ */
+function parseRefinement(
+  text: string,
+  ctx: SearchContext,
+): {
+  filtered: Candidate[];
+  description: string;
+} {
+  const lower = text.toLowerCase();
+  let candidates = [...ctx.currentCandidates];
+  const actions: string[] = [];
+
+  // ── Score threshold filters ───────────────────────────────────────────
+  const scoreAboveMatch = lower.match(/(?:score\s*(?:above|over|>=?|higher\s+than|at\s+least)|above|minimum\s+score|min\s+score)\s*(\d+)/);
+  const scoreBelowMatch = lower.match(/(?:score\s*(?:below|under|<=?|lower\s+than)|below)\s*(\d+)/);
+
+  if (scoreAboveMatch) {
+    const threshold = parseInt(scoreAboveMatch[1], 10);
+    candidates = candidates.filter((c) => c.matchScore >= threshold);
+    actions.push(`score >= ${threshold}`);
+  }
+  if (scoreBelowMatch) {
+    const threshold = parseInt(scoreBelowMatch[1], 10);
+    candidates = candidates.filter((c) => c.matchScore < threshold);
+    actions.push(`score < ${threshold}`);
+  }
+
+  // ── Top N ─────────────────────────────────────────────────────────────
+  const topNMatch = lower.match(/(?:top|best|highest|first)\s+(\d+)/);
+  const zhTopN = text.match(/前(\d+)名/);
+  if (topNMatch || zhTopN) {
+    const n = parseInt((topNMatch || zhTopN)![1], 10);
+    candidates = candidates.slice(0, n);
+    actions.push(`top ${n}`);
+  }
+
+  // ── Skill-based filters ───────────────────────────────────────────────
+  // "with X experience/skill" or "who know X"
+  const includeSkills: string[] = [];
+  const excludeSkills: string[] = [];
+
+  for (const skill of KNOWN_SKILLS) {
+    const skillLower = skill.toLowerCase();
+    // Check for exclusion: "without X", "exclude X", "no X"
+    const excludePattern = new RegExp(`(?:without|exclude|excluding|no|remove)\\s+.*?${skillLower.replace(/[+.*]/g, '\\$&')}`, 'i');
+    const includePattern = new RegExp(`(?:with|know|have|has|using|who\\s+(?:know|have|use))\\s+.*?${skillLower.replace(/[+.*]/g, '\\$&')}`, 'i');
+
+    if (excludePattern.test(lower)) {
+      excludeSkills.push(skill);
+    } else if (includePattern.test(lower) || (lower.includes(skillLower) && !excludePattern.test(lower) && isFilterContext(lower))) {
+      includeSkills.push(skill);
+    }
+  }
+
+  if (includeSkills.length > 0) {
+    candidates = candidates.filter((c) =>
+      includeSkills.some((skill) =>
+        c.skills.some((cs) => cs.toLowerCase() === skill.toLowerCase()),
+      ),
+    );
+    actions.push(`with skills: ${includeSkills.join(", ")}`);
+  }
+  if (excludeSkills.length > 0) {
+    candidates = candidates.filter((c) =>
+      !excludeSkills.some((skill) =>
+        c.skills.some((cs) => cs.toLowerCase() === skill.toLowerCase()),
+      ),
+    );
+    actions.push(`excluding skills: ${excludeSkills.join(", ")}`);
+  }
+
+  // ── Experience-based filters (startup, enterprise, etc.) ──────────────
+  if (/startup/i.test(lower) && (isFilterContext(lower) || /experience|background/i.test(lower))) {
+    candidates = candidates.filter((c) =>
+      c.experience?.some((exp) =>
+        /startup|seed|series\s+[a-c]|early[- ]stage|incubat/i.test(
+          `${exp.company} ${exp.description}`,
+        ),
+      ) ?? false,
+    );
+    actions.push("startup experience");
+  }
+
+  if (/(?:big\s*tech|faang|fortune\s*500|enterprise)/i.test(lower) && (isFilterContext(lower) || /experience|background/i.test(lower))) {
+    const bigTechNames = /google|meta|facebook|amazon|apple|microsoft|netflix|uber|airbnb|stripe|salesforce|oracle|ibm|intel|cisco/i;
+    candidates = candidates.filter((c) =>
+      c.experience?.some((exp) => bigTechNames.test(exp.company)) ?? false,
+    );
+    actions.push("big tech experience");
+  }
+
+  // ── Education filters ─────────────────────────────────────────────────
+  if (/\bcs\s+degree\b|computer\s+science/i.test(lower)) {
+    candidates = candidates.filter((c) =>
+      c.education?.some((edu) =>
+        /computer\s+science|cs\b|software|computing/i.test(edu.degree),
+      ) ?? false,
+    );
+    actions.push("CS degree");
+  }
+  if (/\bmaster'?s?\s+(degree)?\b/i.test(lower) && isFilterContext(lower)) {
+    candidates = candidates.filter((c) =>
+      c.education?.some((edu) =>
+        /master|m\.?s\.?\b|msc\b|m\.?eng/i.test(edu.degree),
+      ) ?? false,
+    );
+    actions.push("Master's degree");
+  }
+  if (/\bphd\b/i.test(lower) && isFilterContext(lower)) {
+    candidates = candidates.filter((c) =>
+      c.education?.some((edu) => /ph\.?d|doctor/i.test(edu.degree)) ?? false,
+    );
+    actions.push("PhD");
+  }
+
+  // ── Location filters ──────────────────────────────────────────────────
+  const locationMatch = lower.match(/(?:located|based)\s+in\s+(\w+(?:\s+\w+)?)/i);
+  if (locationMatch) {
+    const loc = locationMatch[1].toLowerCase();
+    candidates = candidates.filter((c) =>
+      c.location?.toLowerCase().includes(loc) ?? false,
+    );
+    actions.push(`located in ${locationMatch[1]}`);
+  }
+
+  // ── Re-rank / sort-by ─────────────────────────────────────────────────
+  if (/(?:re-?rank|resort|re-?sort|sort|rank|order)\s*(?:by)?\s*(?:technical|tech)/i.test(lower)) {
+    candidates.sort((a, b) => (b.subScores?.technicalFit ?? 0) - (a.subScores?.technicalFit ?? 0));
+    actions.push("sorted by Technical Fit");
+  } else if (/(?:re-?rank|resort|re-?sort|sort|rank|order)\s*(?:by)?\s*(?:culture|cultural)/i.test(lower)) {
+    candidates.sort((a, b) => (b.subScores?.cultureFit ?? 0) - (a.subScores?.cultureFit ?? 0));
+    actions.push("sorted by Culture Fit");
+  } else if (/(?:re-?rank|resort|re-?sort|sort|rank|order)\s*(?:by)?\s*(?:experience|exp)/i.test(lower)) {
+    candidates.sort((a, b) => (b.subScores?.experienceDepth ?? 0) - (a.subScores?.experienceDepth ?? 0));
+    actions.push("sorted by Experience Depth");
+  }
+
+  // ── Build description ─────────────────────────────────────────────────
+  let description: string;
+  if (actions.length > 0) {
+    description = `Refined results: ${actions.join(", ")}. ${candidates.length} candidates remain from the original ${ctx.currentCandidates.length}.`;
+  } else {
+    // Generic fallback: try to extract a keyword-based filter
+    const keywords = extractRefinementKeywords(lower);
+    if (keywords.length > 0) {
+      candidates = candidates.filter((c) => {
+        const blob = [
+          c.name, ...c.skills,
+          c.headline, c.currentCompany, c.currentTitle, c.location,
+          ...(c.experience?.map((e) => `${e.company} ${e.role} ${e.description}`) ?? []),
+          ...(c.education?.map((e) => `${e.institution} ${e.degree}`) ?? []),
+        ].filter(Boolean).join(" ").toLowerCase();
+        return keywords.some((kw) => blob.includes(kw));
+      });
+      description = `Filtered by: ${keywords.join(", ")}. ${candidates.length} candidates match from the original ${ctx.currentCandidates.length}.`;
+    } else {
+      description = `Applied your refinement. ${candidates.length} candidates shown.`;
+    }
+  }
+
+  return { filtered: candidates, description };
+}
+
+/** Check if the context suggests this is a filter request (not just mentioning a skill). */
+function isFilterContext(text: string): boolean {
+  return /(?:show|only|just|filter|with|who|has|have|exclude|without|keep|include|display|list|narrow)/i.test(text);
+}
+
+/** Extract meaningful keywords from a refinement query for fallback text-search. */
+function extractRefinementKeywords(text: string): string[] {
+  // Remove common stop words and refinement verbs
+  const stopWords = new Set([
+    "show", "me", "only", "just", "the", "a", "an", "and", "or", "with",
+    "without", "who", "that", "have", "has", "are", "is", "in", "at",
+    "from", "to", "for", "of", "by", "on", "can", "do", "does", "their",
+    "filter", "exclude", "include", "keep", "remove", "display", "list",
+    "candidates", "candidate", "people", "results", "those", "them",
+    "please", "re-rank", "rerank", "sort", "rank", "order",
+  ]);
+  const words = text.split(/\s+/).filter((w) => w.length > 2 && !stopWords.has(w));
+  return words.length > 0 ? words : [];
+}
+
 // ── Main hook ───────────────────────────────────────────────────────────────
 
 /**
@@ -609,9 +851,10 @@ function buildAcknowledgement(query: string, jobTitle: string): string {
  * Messages are stored in the Zustand sidebar store so they survive
  * mobile tab switches (MobileChatView unmount/remount).
  *
- * Handles two flows:
+ * Handles three flows:
  * 1. Search flow: detect search intent → progress ticker → action card
  * 2. Job creation flow (FLOW-1): detect hire intent → extract JD → preview card
+ * 3. Refinement flow (A-4): detect follow-up refinement → filter/re-rank → updated action card
  */
 export function useChat() {
   const { chatMessages, addChatMessage, updateChatMessage } =
@@ -621,11 +864,14 @@ export function useChat() {
   const selectJob = useDataPanelStore((s) => s.selectJob);
   const setDataPanelOpen = useDataPanelStore((s) => s.setDataPanelOpen);
   const setCandidates = useCandidateStore((s) => s.setCandidates);
+  const getCandidates = useCandidateStore((s) => s.getCandidates);
   const setLoadingCandidates = useCandidateStore((s) => s.setLoading);
   const setCandidateError = useCandidateStore((s) => s.setError);
   const progressTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   /** Tracks the most recently created job (from FLOW-1) so we can auto-search for it */
   const lastCreatedJobRef = useRef<{ jobId: string; jdData: JDPreviewData } | null>(null);
+  /** Tracks the active search context for follow-up refinements (A-4) */
+  const searchContextRef = useRef<SearchContext | null>(null);
 
   /** Generate a unique job ID based on timestamp */
   const generateJobId = useCallback(() => {
@@ -792,6 +1038,14 @@ export function useChat() {
                 setCandidates(jobId, candidates);
                 setLoadingCandidates(jobId, false);
 
+                // Save search context for follow-up refinements (A-4)
+                searchContextRef.current = {
+                  jobId,
+                  jdData,
+                  originalCandidates: [...candidates],
+                  currentCandidates: [...candidates],
+                };
+
                 // Complete progress
                 updateChatMessage(progressId, {
                   progress: {
@@ -858,6 +1112,14 @@ export function useChat() {
 
                 setCandidates(jobId, fallbackCandidates);
                 setLoadingCandidates(jobId, false);
+
+                // Save search context for follow-up refinements (A-4)
+                searchContextRef.current = {
+                  jobId,
+                  jdData,
+                  originalCandidates: [...fallbackCandidates],
+                  currentCandidates: [...fallbackCandidates],
+                };
 
                 updateChatMessage(progressId, {
                   progress: {
@@ -1021,6 +1283,104 @@ export function useChat() {
         return;
       }
 
+      // ── A-4: Refinement follow-up on existing search results ──────────
+      if (searchContextRef.current && isRefinementIntent(trimmed)) {
+        const ctx = searchContextRef.current;
+
+        // Agent acknowledges refinement
+        const ackMessage: ChatMessage = {
+          id: `ack-refine-${Date.now()}`,
+          role: "agent",
+          content: "Refining results based on your criteria...",
+          timestamp: new Date(),
+        };
+        addChatMessage(ackMessage);
+
+        // Apply refinement after a brief delay for natural feel
+        setTimeout(() => {
+          const { filtered, description } = parseRefinement(trimmed, ctx);
+
+          // Update candidates in the store
+          setCandidates(ctx.jobId, filtered);
+
+          // Update current candidates in context (keep original for reset)
+          searchContextRef.current = {
+            ...ctx,
+            currentCandidates: filtered,
+          };
+
+          // Refresh pipeline panel
+          selectJob(ctx.jobId);
+          setDataPanelOpen(true);
+
+          // Agent response with summary
+          const summaryMsg: ChatMessage = {
+            id: `refine-summary-${Date.now()}`,
+            role: "agent",
+            content: description,
+            timestamp: new Date(),
+          };
+          addChatMessage(summaryMsg);
+
+          // Show updated action card with new metrics
+          setTimeout(() => {
+            const highScoreCount = filtered.filter((c) => c.matchScore >= 80).length;
+            const avgScore =
+              filtered.length > 0
+                ? Math.round(filtered.reduce((s, c) => s + c.matchScore, 0) / filtered.length)
+                : 0;
+
+            const actionCardData: ActionCardData = {
+              title: "Refined Results",
+              summary: `${filtered.length} candidates after refinement. ${highScoreCount} scored above 80% for ${ctx.jdData.title}.`,
+              metrics: [
+                { label: "Showing", value: filtered.length },
+                { label: "Original", value: ctx.originalCandidates.length },
+                { label: "High Score", value: highScoreCount },
+                { label: "Avg Score", value: avgScore },
+              ],
+              actionLabel: "View Pipeline",
+              actionHref: `/job/${ctx.jobId}/pipeline`,
+            };
+            const actionCardMessage: ChatMessage = {
+              id: `action-card-refine-${Date.now()}`,
+              role: "agent",
+              content: "",
+              timestamp: new Date(),
+              type: "action-card",
+              actionCard: actionCardData,
+            };
+            addChatMessage(actionCardMessage);
+          }, 400);
+        }, 500);
+
+        return;
+      }
+
+      // ── A-4: Reset refinement ("show all", "reset", "start over") ─────
+      if (searchContextRef.current && /\b(show\s+all|reset|start\s+over|clear\s+filter|undo|restore|全部|重置)\b/i.test(trimmed)) {
+        const ctx = searchContextRef.current;
+
+        // Restore original candidates
+        setCandidates(ctx.jobId, ctx.originalCandidates);
+        searchContextRef.current = {
+          ...ctx,
+          currentCandidates: [...ctx.originalCandidates],
+        };
+
+        selectJob(ctx.jobId);
+        setDataPanelOpen(true);
+
+        const resetMsg: ChatMessage = {
+          id: `reset-${Date.now()}`,
+          role: "agent",
+          content: `Filters cleared. Showing all ${ctx.originalCandidates.length} candidates for ${ctx.jdData.title}.`,
+          timestamp: new Date(),
+        };
+        addChatMessage(resetMsg);
+        return;
+      }
+
       // ── FLOW-2: Confirmation after job creation → Apollo search ────────
       if (isConfirmationIntent(trimmed) && lastCreatedJobRef.current) {
         const { jobId, jdData } = lastCreatedJobRef.current;
@@ -1104,6 +1464,26 @@ export function useChat() {
             });
 
             if (isLast) {
+              // Save search context for follow-up refinements (A-4)
+              const mockCandidates = MOCK_CANDIDATES[match.jobId] || [];
+              const matchedJob = MOCK_JOBS.find((j) => j.id === match.jobId);
+              if (mockCandidates.length > 0 && matchedJob) {
+                searchContextRef.current = {
+                  jobId: match.jobId,
+                  jdData: {
+                    title: matchedJob.title,
+                    department: matchedJob.department,
+                    location: "Remote",
+                    experience: "3+ years",
+                    skills: matchedJob.jd?.skills.map((s) => s.name) || [],
+                    description: matchedJob.jd?.summary || "",
+                    seniority: matchedJob.jd?.seniority || "Mid-Level",
+                  },
+                  originalCandidates: [...mockCandidates],
+                  currentCandidates: [...mockCandidates],
+                };
+              }
+
               const actionTimer = setTimeout(() => {
                 const actionCardData: ActionCardData = {
                   title: "Search Complete",
@@ -1144,7 +1524,7 @@ export function useChat() {
         }, 600);
       }
     },
-    [addChatMessage, updateChatMessage, executeApolloSearch, findRecentUserJob],
+    [addChatMessage, updateChatMessage, executeApolloSearch, findRecentUserJob, setCandidates, selectJob, setDataPanelOpen],
   );
 
   return { messages: chatMessages, handleSend, handleJDConfirm, handleJDModify };
