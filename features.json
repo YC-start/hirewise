@@ -232,7 +232,7 @@
         "Verify the ranking view updates to reflect the refined results.",
         "Verify the previous Action Card in chat is still visible for reference."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "A-5",
