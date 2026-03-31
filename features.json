@@ -625,7 +625,7 @@
         "Resize to mobile (<768px) — verify chat is full-screen with bottom tab navigation for data panels.",
         "Verify the previous left-sidebar chat layout is completely removed."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "FLOW-1",
