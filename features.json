@@ -197,7 +197,7 @@
         "Resize to tablet width (768-1279px) — verify right sidebar auto-collapses to icon strip.",
         "Resize below 768px — verify chat is full-screen default, with bottom tabs for data panels."
       ],
-      "passes": false,
+      "passes": true,
       "rework_note": "Previous implementation had chat as left sidebar. Must be rebuilt with chat as main area and data panels as right sidebar. See ARCH-1 for the layout flip feature."
     },
     {
@@ -250,7 +250,7 @@
         "Verify the new job appears in the right sidebar Jobs panel.",
         "Verify no form or modal was used in the entire flow."
       ],
-      "passes": false,
+      "passes": true,
       "merged_into": "FLOW-1"
     },
     {
@@ -646,7 +646,7 @@
         "Verify no modal or form was used at any point.",
         "Try creating another job via chat — verify the flow is repeatable."
       ],
-      "passes": false,
+      "passes": true,
       "replaces": ["B-3", "A-5"]
     },
     {
