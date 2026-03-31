@@ -4,7 +4,7 @@
 ==============================================================================
 
 Last updated: 2026-03-30
-Phase: Phase 7 — P1 Features (A-4 complete, A-6 complete, B-4 complete)
+Phase: Phase 7 — P1 Features (A-4 passed, A-6 passed, B-4 awaiting Evaluator)
 Previous phase completed: Phase 5 — Agent Chat (LAYOUT-1, LAYOUT-2, B-1, B-2, C-1, C-2, D-1, D-2, D-4, A-2, A-3, A-1 complete)
 
 ==============================================================================
@@ -447,7 +447,7 @@ PHASE 7: P1 FEATURES (renumbered from Phase 6)
   [DEPRECATED] B-3  Quick-create job modal → replaced by FLOW-1 (P0), see Phase 6
       - Previous implementation preserved in git history but code to be REMOVED
       - Was: Radix UI Dialog-based modal triggered by "+ New Job" button
-  [x] B-4  Archive/close job
+  [x] B-4  Archive/close job  [AWAITING EVALUATOR REVIEW]
       - Context menu (three-dot DotsThreeVertical icon) on each job card (grid + list views)
       - Two options: "Close Job" and "Archive Job" — both set status to Closed
       - updateJobStatus action added to dashboard-store.ts (Zustand)

@@ -285,7 +285,7 @@
         "Navigate to the job's pipeline — verify it is in a read-only / frozen state.",
         "Verify the job card is visually demoted (e.g., lower opacity, moved to a separate section)."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "C-3",
