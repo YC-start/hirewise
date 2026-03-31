@@ -37,6 +37,7 @@ export function JDPreviewCard({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<JDPreviewData>(data);
+  const [confirmedData, setConfirmedData] = useState<JDPreviewData | null>(null);
   const [isConfirmed, setIsConfirmed] = useState(false);
 
   const handleFieldChange = useCallback(
@@ -55,14 +56,17 @@ export function JDPreviewCard({
   }, []);
 
   const handleConfirm = useCallback(() => {
+    const finalData = isEditing ? editData : (confirmedData ?? data);
+    setConfirmedData(finalData);
     setIsConfirmed(true);
     setIsEditing(false);
-    onConfirm(isEditing ? editData : data);
-  }, [onConfirm, data, editData, isEditing]);
+    onConfirm(finalData);
+  }, [onConfirm, data, editData, confirmedData, isEditing]);
 
   const handleModify = useCallback(() => {
     if (isEditing) {
       // Save edits and show preview again
+      setConfirmedData(editData);
       setIsEditing(false);
       onModify(editData);
     } else {
@@ -70,7 +74,7 @@ export function JDPreviewCard({
     }
   }, [isEditing, editData, onModify]);
 
-  const displayData = isEditing ? editData : data;
+  const displayData = isEditing ? editData : (confirmedData ?? data);
 
   if (isConfirmed) {
     return (
@@ -117,7 +121,8 @@ export function JDPreviewCard({
       {/* Title row */}
       <div className="px-4 pt-3 pb-2">
         <h3
-          className="font-heading text-sm font-bold text-accent-primary tracking-wide uppercase"
+          className="font-heading text-sm font-bold tracking-wide uppercase"
+          style={{ color: "var(--accent-primary)" }}
           data-testid="jd-preview-title"
         >
           JD Preview

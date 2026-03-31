@@ -110,6 +110,10 @@ const ROLE_KEYWORDS: Record<string, { title: string; department: string }> = {
   "mobile dev": { title: "Mobile Developer", department: "Engineering" },
   "ios dev": { title: "iOS Developer", department: "Engineering" },
   "android dev": { title: "Android Developer", department: "Engineering" },
+  "go engineer": { title: "Go Engineer", department: "Engineering" },
+  "go developer": { title: "Go Developer", department: "Engineering" },
+  "golang engineer": { title: "Go Engineer", department: "Engineering" },
+  "golang developer": { title: "Go Developer", department: "Engineering" },
   "qa engineer": { title: "QA Engineer", department: "Engineering" },
   "test engineer": { title: "QA Engineer", department: "Engineering" },
   "工程师": { title: "Engineer", department: "Engineering" },
@@ -204,9 +208,9 @@ const LOCATION_PATTERNS: Array<{
   pattern: RegExp;
   extract: (match: RegExpMatchArray) => string;
 }> = [
-  { pattern: /\bin\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)/i, extract: (m) => m[1] },
-  { pattern: /\bat\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)/i, extract: (m) => m[1] },
-  { pattern: /(?:located|based)\s+in\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)/i, extract: (m) => m[1] },
+  { pattern: /\bin\s+([A-Z][a-zA-Z]+(?:\s+(?!with\b|for\b|and\b|or\b|at\b|from\b|to\b)[A-Z][a-zA-Z]+)*)/i, extract: (m) => m[1] },
+  { pattern: /\bat\s+([A-Z][a-zA-Z]+(?:\s+(?!with\b|for\b|and\b|or\b|at\b|from\b|to\b)[A-Z][a-zA-Z]+)*)/i, extract: (m) => m[1] },
+  { pattern: /(?:located|based)\s+in\s+([A-Z][a-zA-Z]+(?:\s+(?!with\b|for\b|and\b|or\b|at\b|from\b|to\b)[A-Z][a-zA-Z]+)*)/i, extract: (m) => m[1] },
   { pattern: /([A-Z][a-zA-Z]+)\s+office/i, extract: (m) => m[1] },
   { pattern: /remote/i, extract: () => "Remote" },
   { pattern: /hybrid/i, extract: () => "Hybrid" },
