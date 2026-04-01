@@ -110,7 +110,7 @@
         "Verify seniority level is displayed.",
         "Verify the rail remains visible while scrolling the main candidate list."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "C-2",
