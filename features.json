@@ -128,7 +128,7 @@
         "Verify up to 3 matched skill tags are displayed per candidate.",
         "Verify row height is 40-44px and uses alternating --surface-tertiary tint."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "D-1",
