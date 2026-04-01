@@ -152,6 +152,17 @@ PHASE 4: CANDIDATE PROFILE — MODULE D (P0)
       - Back to Pipeline link with job title breadcrumb
       - Graceful not-found fallback for invalid candidate IDs
       - data-testid attributes on all key elements
+      [EVAL FIX] CandidateProfile was dead code — never rendered in the candidate route.
+        - /job/[id]/candidate/[cid]/page.tsx was rendering <AppShell>{null}</AppShell>
+          which only showed ProfilePanelContent in the sidebar (flat card list, no timeline)
+        - Fixed: page now resolves candidate from store/mock, renders
+          <AppShell><CandidateProfile candidate={c} jobId={id} jobTitle={t} /></AppShell>
+        - Same wiring pattern as C-1 fix (PipelineView into pipeline route)
+      [EVAL FIX] Sidebar ProfilePanelContent was missing certifications section
+        - Added certifications section with signal-warning square dots and cert names
+        - data-testid="sidebar-certifications" for test targeting
+      [EVAL FIX] Sidebar experience cards were missing description text
+        - Added line-clamp-2 description paragraph below company name in each card
 
   [x] D-2  AI Evaluation Report display
       - Extended Candidate interface with AIEvaluation, DimensionScore types

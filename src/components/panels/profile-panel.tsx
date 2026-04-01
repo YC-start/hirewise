@@ -294,6 +294,11 @@ function ProfileContent({
                     </span>
                   </div>
                   <p className="text-[11px] text-text-secondary mt-0.5">{exp.company}</p>
+                  {exp.description && (
+                    <p className="text-[10px] text-text-muted mt-1 leading-relaxed line-clamp-2">
+                      {exp.description}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -319,6 +324,28 @@ function ProfileContent({
                   </div>
                   <span className="font-mono text-[10px] text-text-muted flex-shrink-0">
                     {edu.year}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Certifications (compact) */}
+        {candidate.certifications && candidate.certifications.length > 0 && (
+          <section className="mb-3" data-testid="sidebar-certifications">
+            <h4 className="table-header text-[9px] mb-2 pb-1 border-b border-border-default">
+              Certifications
+            </h4>
+            <div className="flex flex-col gap-1.5">
+              {candidate.certifications.map((cert) => (
+                <div
+                  key={cert}
+                  className="flex items-start gap-1.5"
+                >
+                  <span className="inline-block w-[6px] h-[6px] mt-[3px] flex-shrink-0 bg-signal-warning" aria-hidden="true" />
+                  <span className="text-[11px] text-text-primary leading-tight">
+                    {cert}
                   </span>
                 </div>
               ))}
