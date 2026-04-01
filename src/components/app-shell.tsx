@@ -61,10 +61,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   // --- Desktop / Tablet layout ---
+  // If children are provided (non-null), render them as the main content area
+  // instead of the default ChatMainArea. This allows route pages like
+  // /job/[id]/pipeline to render PipelineView in the main area.
+  const hasMainContent = children !== null && children !== undefined;
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-surface-primary">
-      {/* AI Conversation — Main Area (left/center, ~60-65%) */}
-      <ChatMainArea />
+      {/* Main Area (left/center, ~60-65%) */}
+      {hasMainContent ? (
+        <div className="flex-1 flex flex-col min-w-0 bg-surface-primary">
+          {children}
+        </div>
+      ) : (
+        <ChatMainArea />
+      )}
 
       {/* Data Panel — Right Sidebar (~35-40%) */}
       <DataPanelSidebar />

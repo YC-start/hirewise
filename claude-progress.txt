@@ -3,7 +3,7 @@
   Build Progress Tracker
 ==============================================================================
 
-Last updated: 2026-03-31
+Last updated: 2026-04-01
 Phase: Phase 7 — Evaluator sweep of P0 features + P1 development
 Evaluator passed today: ARCH-1 (82/78/80/88), FLOW-1 (82/78/80/88), A-5, LAYOUT-1
 Previously passed: A-1, A-2, A-3, A-4, A-6, B-1, B-2, B-4, D-2, D-4, LAYOUT-2, FLOW-2
@@ -94,6 +94,14 @@ PHASE 3: CANDIDATE RANKING VIEW — MODULE C (P0)
       - Back to Dashboard link in top bar
       - Candidate count in header bar
       - Graceful fallback for jobs without JD data
+      [EVAL FIX] PipelineView was dead code — never rendered in any route page.
+        - AppShell updated to render children in main area when provided (non-null),
+          falling back to ChatMainArea when children is null
+        - Pipeline page now passes <PipelineView jobId={id}> as children to AppShell
+        - JDContextRail (280px left rail with seniority badge, required/nice-to-have
+          skill tags, JD summary) now renders in the main content area (~60-65%)
+        - DataPanelSidebar still renders alongside in the right sidebar
+        - No regressions: dashboard and candidate pages still pass null → ChatMainArea
 
   [x] C-2  Ranked candidate list with scores
       - Created mock-candidates.ts with 10-13 candidates per job (6 jobs)
