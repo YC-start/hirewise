@@ -79,7 +79,7 @@ const ACTION_BUTTONS: ActionButtonConfig[] = [
 
 /** Returns Tailwind classes for each action button variant. */
 function getActionButtonClasses(variant: ActionButtonConfig["variant"], isDisabled: boolean): string {
-  const base = "px-4 py-1.5 text-[13px] font-500 font-mono transition-all duration-150";
+  const base = "px-4 py-1.5 text-[13px] font-medium font-mono transition-all duration-150";
 
   if (isDisabled) {
     return `${base} rounded-full opacity-40 cursor-not-allowed bg-surface-tertiary text-text-muted`;
@@ -149,12 +149,12 @@ export function CandidateProfile({ candidate, jobId, jobTitle }: CandidateProfil
             <div className="flex flex-col sm:flex-row sm:items-start gap-4">
               {/* Name + status */}
               <div className="flex-1 min-w-0">
-                <h1 className="font-heading font-700 text-[28px] text-text-primary leading-tight mb-2">
+                <h1 className="font-heading font-bold text-[28px] text-text-primary leading-tight mb-2">
                   {candidate.name}
                 </h1>
                 <div className="flex items-center gap-3 flex-wrap">
                   <span
-                    className={`inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-500 uppercase tracking-wider ${getStatusBadgeClass(currentStatus)}`}
+                    className={`inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-medium uppercase tracking-wider ${getStatusBadgeClass(currentStatus)}`}
                     data-testid="pipeline-status-badge"
                   >
                     {currentStatus}
@@ -222,7 +222,7 @@ export function CandidateProfile({ candidate, jobId, jobTitle }: CandidateProfil
               {candidate.skills.map((skill) => (
                 <span
                   key={skill}
-                  className="inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-500 leading-tight text-accent-primary border border-accent-primary/40 bg-accent-primary/8"
+                  className="inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-medium leading-tight text-accent-primary border border-accent-primary/40 bg-accent-primary/8"
                 >
                   {skill}
                 </span>
@@ -333,11 +333,11 @@ function SubScoreDisplay({ label, value }: { label: string; value: number }) {
   const textClass = getScoreTextClass(value);
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[10px] text-text-muted uppercase tracking-wider font-500">
+      <span className="text-[10px] text-text-muted uppercase tracking-wider font-medium">
         {label}
       </span>
       <span
-        className={`font-mono text-sm font-500 ${textClass}`}
+        className={`font-mono text-sm font-medium ${textClass}`}
         style={{ fontVariantNumeric: "tabular-nums" }}
       >
         {value}
@@ -370,7 +370,7 @@ function TimelineEntry({
       <div className="bg-surface-secondary border border-border-default p-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 mb-2">
           <div className="min-w-0">
-            <h3 className="text-sm font-500 text-text-primary leading-tight">
+            <h3 className="text-sm font-medium text-text-primary leading-tight">
               {experience.role}
             </h3>
             <p className="text-xs text-text-secondary mt-0.5">
@@ -413,7 +413,7 @@ function EducationEntry({
       <div className="bg-surface-secondary border border-border-default p-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
           <div className="min-w-0">
-            <h3 className="text-sm font-500 text-text-primary leading-tight">
+            <h3 className="text-sm font-medium text-text-primary leading-tight">
               {education.degree}
             </h3>
             <p className="text-xs text-text-secondary mt-0.5">
@@ -451,7 +451,7 @@ function CertificationEntry({
 
       {/* Content card */}
       <div className="bg-surface-secondary border border-border-default p-3">
-        <p className="text-sm font-500 text-text-primary leading-tight">
+        <p className="text-sm font-medium text-text-primary leading-tight">
           {certification}
         </p>
       </div>
@@ -483,7 +483,7 @@ function AIEvaluationReport({
         <div className="flex items-center gap-3 mb-3">
           <span className="table-header text-[10px]">Overall Assessment</span>
           <span
-            className={`font-heading font-700 text-[24px] leading-none ${getScoreTextClass(overallScore)}`}
+            className={`font-heading font-bold text-[24px] leading-none ${getScoreTextClass(overallScore)}`}
             style={{ fontVariantNumeric: "tabular-nums" }}
           >
             {overallScore}
@@ -516,9 +516,9 @@ function AIEvaluationReport({
               data-testid={`reasoning-${dim.dimension.toLowerCase().replace(/\s+/g, "-")}`}
             >
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-xs font-500 text-text-primary">{dim.dimension}</span>
+                <span className="text-xs font-medium font-500 text-text-primary">{dim.dimension}</span>
                 <span
-                  className={`font-mono text-xs font-500 ${getScoreTextClass(dim.score)}`}
+                  className={`font-mono text-xs font-medium ${getScoreTextClass(dim.score)}`}
                   style={{ fontVariantNumeric: "tabular-nums" }}
                 >
                   {dim.score}
@@ -541,7 +541,7 @@ function AIEvaluationReport({
             {evaluation.strengths.map((strength) => (
               <span
                 key={strength}
-                className="inline-flex items-center px-2 py-1 text-[11px] font-mono font-500 leading-tight text-accent-primary border border-accent-primary/40 bg-accent-primary/8"
+                className="inline-flex items-center px-2 py-1 text-[11px] font-mono font-medium leading-tight text-accent-primary border border-accent-primary/40 bg-accent-primary/8"
               >
                 {strength}
               </span>
@@ -556,7 +556,7 @@ function AIEvaluationReport({
             {evaluation.skillGaps.map((gap) => (
               <span
                 key={gap}
-                className="inline-flex items-center px-2 py-1 text-[11px] font-mono font-500 leading-tight text-signal-danger border border-signal-danger/40 bg-signal-danger/8"
+                className="inline-flex items-center px-2 py-1 text-[11px] font-mono font-medium leading-tight text-signal-danger border border-signal-danger/40 bg-signal-danger/8"
               >
                 {gap}
               </span>
@@ -577,13 +577,13 @@ function DimensionScoreBar({ dimension }: { dimension: DimensionScore }) {
   return (
     <div className="flex items-center gap-3" data-testid={`dimension-bar-${dimension.dimension.toLowerCase().replace(/\s+/g, "-")}`}>
       {/* Label — fixed width for alignment */}
-      <span className="w-[140px] flex-shrink-0 text-xs text-text-secondary font-500 truncate">
+      <span className="w-[140px] flex-shrink-0 text-xs text-text-secondary font-medium truncate">
         {dimension.dimension}
       </span>
 
       {/* Score value */}
       <span
-        className={`w-[32px] flex-shrink-0 font-mono text-sm font-500 text-right ${textClass}`}
+        className={`w-[32px] flex-shrink-0 font-mono text-sm font-medium text-right ${textClass}`}
         style={{ fontVariantNumeric: "tabular-nums" }}
       >
         {dimension.score}

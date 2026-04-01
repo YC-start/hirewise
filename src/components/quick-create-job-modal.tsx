@@ -98,7 +98,7 @@ export function QuickCreateJobModal() {
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <Dialog.Title className="font-heading text-lg font-700 text-text-primary">
+            <Dialog.Title className="font-heading text-lg font-bold text-text-primary">
               Create New Job
             </Dialog.Title>
             <Dialog.Close asChild>
@@ -224,14 +224,14 @@ export function QuickCreateJobModal() {
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-4 py-2 text-sm font-heading font-700 text-text-secondary hover:text-text-primary transition-colors"
+                className="px-4 py-2 text-sm font-heading font-bold text-text-secondary hover:text-text-primary transition-colors"
                 data-testid="modal-cancel-btn"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-accent-primary text-surface-primary font-heading text-sm font-700 rounded-full hover:opacity-90 transition-opacity"
+                className="px-6 py-2 bg-accent-primary text-surface-primary font-heading text-sm font-bold rounded-full hover:opacity-90 transition-opacity"
                 data-testid="modal-submit-btn"
               >
                 Create Job

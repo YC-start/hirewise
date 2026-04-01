@@ -90,7 +90,7 @@ export function PipelinePanelContent() {
           >
             <ArrowLeft size={14} weight="bold" />
           </button>
-          <h3 className="font-heading text-xs font-700 text-text-primary truncate">
+          <h3 className="font-heading text-xs font-bold text-text-primary truncate">
             {job.title}
           </h3>
         </div>
@@ -121,7 +121,7 @@ export function PipelinePanelContent() {
             {job.jd.skills.slice(0, 6).map((skill) => (
               <span
                 key={skill.name}
-                className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-500 leading-tight ${
+                className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium leading-tight ${
                   skill.category === "required"
                     ? "text-accent-primary border border-accent-primary/40 bg-accent-primary/8"
                     : "text-text-secondary border border-border-default border-dashed"
@@ -215,7 +215,7 @@ function CandidateRowCompact({
       </span>
 
       {/* Name */}
-      <span className="flex-1 pl-2 text-xs text-text-primary font-500 truncate">
+      <span className="flex-1 pl-2 text-xs text-text-primary font-medium truncate">
         {candidate.name}
       </span>
 
@@ -231,7 +231,7 @@ function CandidateRowCompact({
           />
         </div>
         <span
-          className={`font-heading text-xs font-700 min-w-[24px] text-right ${scoreTextClass}`}
+          className={`font-heading text-xs font-bold min-w-[24px] text-right ${scoreTextClass}`}
           style={{ fontVariantNumeric: "tabular-nums" }}
         >
           {candidate.matchScore}

@@ -53,14 +53,14 @@ export function JDContextRail({
         {/* Job header */}
         <div className="mb-5">
           <div className="flex items-start justify-between gap-2 mb-1">
-            <h3 className="font-heading text-base font-700 text-text-primary leading-tight">
+            <h3 className="font-heading text-base font-bold text-text-primary leading-tight">
               {jobTitle}
             </h3>
           </div>
           <p className="text-text-secondary text-xs">{department}</p>
           <div className="flex items-center gap-2 mt-2">
             <span
-              className={`inline-flex items-center px-2 py-0.5 text-xs font-mono font-500 ${statusStyle(status)}`}
+              className={`inline-flex items-center px-2 py-0.5 text-xs font-mono font-medium ${statusStyle(status)}`}
               data-testid="rail-status-badge"
             >
               {status}
@@ -75,7 +75,7 @@ export function JDContextRail({
             label="Seniority"
           />
           <div className="mt-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-500 text-accent-secondary border border-accent-secondary/40 bg-accent-secondary/8">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-medium text-accent-secondary border border-accent-secondary/40 bg-accent-secondary/8">
               <Target size={12} weight="bold" />
               {jd.seniority}
             </span>
@@ -158,7 +158,7 @@ function SkillTagChip({ skill }: { skill: SkillTag }) {
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-500 leading-tight ${
+      className={`inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-medium leading-tight ${
         isRequired
           ? "text-accent-primary border border-accent-primary/40 bg-accent-primary/8"
           : "text-text-secondary border border-border-default border-dashed bg-surface-tertiary/50"

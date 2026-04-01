@@ -118,6 +118,15 @@ PHASE 3: CANDIDATE RANKING VIEW — MODULE C (P0)
       - Placeholder candidate profile page created at /job/[id]/candidate/[cid]
       - data-testid attributes on all key elements
       - Integrated into pipeline-view.tsx right panel
+      [EVAL FIX] Tailwind v4 font-weight: font-700/font-500 are not valid Tailwind v4
+        utilities — they rendered as font-weight: 400 instead of 700/500. Systemic fix:
+        1. Added .font-700 { font-weight: 700 } and .font-500 { font-weight: 500 }
+           custom utilities in globals.css for backward compatibility
+        2. Replaced font-700 → font-bold, font-500 → font-medium across all 8 component
+           files (candidate-ranked-list, pipeline-view, jd-context-rail, candidate-profile,
+           quick-create-job-modal, pipeline-panel, profile-panel, jobs-panel)
+        3. Two test-referenced elements retain both classes (font-bold font-700,
+           font-medium font-500) for existing test selector compatibility
 
 ==============================================================================
 PHASE 4: CANDIDATE PROFILE — MODULE D (P0)

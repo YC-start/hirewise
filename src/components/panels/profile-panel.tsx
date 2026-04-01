@@ -67,7 +67,7 @@ const ACTION_BUTTONS: ActionButtonConfig[] = [
 ];
 
 function getActionButtonClasses(variant: ActionButtonConfig["variant"], isDisabled: boolean): string {
-  const base = "px-2 py-1 text-[10px] font-500 font-mono transition-all duration-150";
+  const base = "px-2 py-1 text-[10px] font-medium font-mono transition-all duration-150";
 
   if (isDisabled) {
     return `${base} rounded-full opacity-40 cursor-not-allowed bg-surface-tertiary text-text-muted`;
@@ -190,12 +190,12 @@ function ProfileContent({
         {/* Name + Score */}
         <div className="flex items-start justify-between gap-2 mb-2" data-testid="candidate-header">
           <div className="min-w-0 flex-1">
-            <h3 className="font-heading text-base font-700 text-text-primary leading-tight">
+            <h3 className="font-heading text-base font-bold text-text-primary leading-tight">
               {candidate.name}
             </h3>
             <div className="flex items-center gap-2 mt-1">
               <span
-                className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-500 uppercase tracking-wider ${getStatusBadgeClass(currentStatus)}`}
+                className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium uppercase tracking-wider ${getStatusBadgeClass(currentStatus)}`}
                 data-testid="pipeline-status-badge"
               >
                 {currentStatus}
@@ -205,7 +205,7 @@ function ProfileContent({
           <div className="flex-shrink-0 text-right" data-testid="candidate-score">
             <span className="table-header text-[9px]">Score</span>
             <span
-              className={`block font-heading font-700 text-[24px] leading-none ${scoreTextClass}`}
+              className={`block font-heading font-bold text-[24px] leading-none ${scoreTextClass}`}
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {candidate.matchScore}
@@ -264,7 +264,7 @@ function ProfileContent({
           {candidate.skills.map((skill) => (
             <span
               key={skill}
-              className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-500 text-accent-primary border border-accent-primary/40 bg-accent-primary/8"
+              className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium text-accent-primary border border-accent-primary/40 bg-accent-primary/8"
             >
               {skill}
             </span>
@@ -286,7 +286,7 @@ function ProfileContent({
               {candidate.experience.map((exp, idx) => (
                 <div key={`${exp.company}-${idx}`} className="bg-surface-tertiary/50 border border-border-default p-2">
                   <div className="flex justify-between gap-1">
-                    <span className="text-xs text-text-primary font-500 truncate">
+                    <span className="text-xs text-text-primary font-medium truncate">
                       {exp.role}
                     </span>
                     <span className="font-mono text-[10px] text-text-muted flex-shrink-0">
@@ -310,7 +310,7 @@ function ProfileContent({
               {candidate.education.map((edu, idx) => (
                 <div key={`${edu.institution}-${idx}`} className="flex justify-between gap-1">
                   <div className="min-w-0">
-                    <span className="text-xs text-text-primary font-500 block truncate">
+                    <span className="text-xs text-text-primary font-medium block truncate">
                       {edu.degree}
                     </span>
                     <span className="text-[11px] text-text-secondary block truncate">
@@ -337,7 +337,7 @@ function SubScore({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center gap-1">
       <span className="text-[9px] text-text-muted uppercase tracking-wider">{label}</span>
-      <span className={`font-mono text-[11px] font-500 ${textClass}`}>{value}</span>
+      <span className={`font-mono text-[11px] font-medium ${textClass}`}>{value}</span>
     </div>
   );
 }
@@ -395,7 +395,7 @@ function CompactDimensionBar({ dimension }: { dimension: DimensionScore }) {
       <span className="w-[80px] flex-shrink-0 text-[10px] text-text-secondary truncate">
         {dimension.dimension}
       </span>
-      <span className={`w-[20px] font-mono text-[10px] font-500 text-right ${textClass}`}>
+      <span className={`w-[20px] font-mono text-[10px] font-medium text-right ${textClass}`}>
         {dimension.score}
       </span>
       <div className="flex-1 h-[4px] bg-surface-tertiary">

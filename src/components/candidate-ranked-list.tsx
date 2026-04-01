@@ -120,7 +120,7 @@ function CandidateRow({ candidate, rank, jobId, isOdd }: CandidateRowProps) {
 
       {/* Name */}
       <div className="flex-1 min-w-[140px] pl-3">
-        <span className="text-sm text-text-primary font-500 truncate block">
+        <span className="text-sm text-text-primary font-medium truncate block">
           {candidate.name}
         </span>
       </div>
@@ -128,7 +128,7 @@ function CandidateRow({ candidate, rank, jobId, isOdd }: CandidateRowProps) {
       {/* AI Score: number + bar */}
       <div className="w-[200px] pl-3 flex items-center gap-3">
         <span
-          className={`font-heading font-700 text-lg leading-none min-w-[36px] ${scoreTextClass}`}
+          className={`font-heading font-bold font-700 text-lg leading-none min-w-[36px] ${scoreTextClass}`}
           style={{ fontVariantNumeric: "tabular-nums" }}
         >
           {candidate.matchScore}
@@ -150,7 +150,7 @@ function CandidateRow({ candidate, rank, jobId, isOdd }: CandidateRowProps) {
         {topSkills.map((skill) => (
           <span
             key={skill}
-            className="inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-500 leading-tight text-accent-primary border border-accent-primary/40 bg-accent-primary/8 whitespace-nowrap flex-shrink-0"
+            className="inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-medium leading-tight text-accent-primary border border-accent-primary/40 bg-accent-primary/8 whitespace-nowrap flex-shrink-0"
             data-testid={`skill-chip-${skill.toLowerCase().replace(/[\s/()]+/g, "-")}`}
           >
             {skill}
@@ -178,7 +178,7 @@ function SubScoreChip({ label, value }: { label: string; value: number }) {
       <span className="text-[9px] text-text-muted uppercase tracking-wider">
         {label}
       </span>
-      <span className={`font-mono text-[11px] font-500 ${scoreTextClass}`}>
+      <span className={`font-mono text-[11px] font-medium ${scoreTextClass}`}>
         {value}
       </span>
     </div>

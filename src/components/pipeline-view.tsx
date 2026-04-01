@@ -28,7 +28,7 @@ export function PipelineView({ jobId }: PipelineViewProps) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="font-heading text-xl font-700 text-text-primary mb-2">
+          <h2 className="font-heading text-xl font-bold text-text-primary mb-2">
             Job Not Found
           </h2>
           <p className="text-text-muted text-sm mb-4">
@@ -59,7 +59,7 @@ export function PipelineView({ jobId }: PipelineViewProps) {
             <ArrowLeft size={16} weight="bold" />
           </Link>
           <div className="flex items-center gap-2">
-            <h2 className="font-heading text-base font-700 text-text-primary">
+            <h2 className="font-heading text-base font-bold text-text-primary">
               Pipeline
             </h2>
             <span className="text-text-muted text-xs font-mono">

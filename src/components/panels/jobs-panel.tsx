@@ -86,7 +86,7 @@ export function JobsPanelContent() {
           <ViewToggle viewMode={viewMode} onChange={setViewMode} />
           <button
             onClick={handleNewJob}
-            className="flex items-center gap-1 px-3 py-1 bg-accent-primary text-surface-primary font-heading text-[11px] font-700 rounded-full hover:opacity-90 transition-opacity"
+            className="flex items-center gap-1 px-3 py-1 bg-accent-primary text-surface-primary font-heading text-[11px] font-bold rounded-full hover:opacity-90 transition-opacity"
             data-testid="new-job-btn"
           >
             <ChatCircleDots size={12} weight="bold" />
@@ -213,7 +213,7 @@ function MiniStatCard({
         <p className="text-text-muted text-[10px] font-medium uppercase tracking-wider">
           {label}
         </p>
-        <p className="font-heading text-base font-700 text-text-primary">
+        <p className="font-heading text-base font-bold text-text-primary">
           {value}
         </p>
       </div>
@@ -324,7 +324,7 @@ function JobCardCompact({
       >
         <div className="flex items-start justify-between mb-2">
           <div className="min-w-0 flex-1">
-            <h3 className="font-heading text-sm font-700 text-text-primary group-hover:text-accent-primary transition-colors truncate">
+            <h3 className="font-heading text-sm font-bold text-text-primary group-hover:text-accent-primary transition-colors truncate">
               {job.title}
             </h3>
             <p className="text-text-secondary text-[11px] mt-0.5">{job.department}</p>
@@ -365,7 +365,7 @@ function JobCardCompact({
 function StatusBadge({ status }: { status: Job["status"] }) {
   return (
     <span
-      className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-500 ${STATUS_BADGE_STYLES[status]}`}
+      className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium ${STATUS_BADGE_STYLES[status]}`}
       data-testid={`status-badge-${status.toLowerCase()}`}
     >
       {status}
@@ -392,7 +392,7 @@ function MetricItem({
         {icon}
       </span>
       <span
-        className={`font-mono text-[11px] font-500 ${
+        className={`font-mono text-[11px] font-medium ${
           accent ? "text-accent-primary" : "text-text-primary"
         }`}
       >
@@ -448,7 +448,7 @@ function JobListCompact({
               onClick={() => onSelectJob(job.id)}
               className="flex-1 min-w-0 cursor-pointer h-full flex items-center"
             >
-              <span className="font-heading text-xs font-700 text-text-primary truncate block">
+              <span className="font-heading text-xs font-bold text-text-primary truncate block">
                 {job.title}
               </span>
             </button>
@@ -456,7 +456,7 @@ function JobListCompact({
               <StatusBadge status={job.status} />
             </div>
             <div className="w-12 text-right">
-              <span className="font-mono text-xs font-500 text-text-primary">
+              <span className="font-mono text-xs font-medium text-text-primary">
                 {job.resumes}
               </span>
             </div>
