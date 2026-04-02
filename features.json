@@ -751,7 +751,7 @@
         "Verify an Action Card summary appears in chat (e.g., '25 candidates found, 8 scored above 85%').",
         "Verify no mock data is used anywhere in the scoring pipeline."
       ],
-      "passes": false,
+      "passes": true,
       "depends_on": [
         "FLOW-2"
       ]
