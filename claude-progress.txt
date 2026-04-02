@@ -423,6 +423,21 @@ PHASE 6: LAYOUT FLIP & CORE FLOWS (P0 — New Architecture)
       - Candidate interface extended with Apollo pass-through fields
         (headline, currentCompany, currentTitle, location, linkedinUrl)
       - npm run build passes cleanly
+      [FLOW-3 FIX] Fallback search path now routes through scoring engine
+        - Old: mock job search used raw MOCK_CANDIDATES with pre-set scores, bypassing
+          the scoring engine entirely — violated "no mock data in scoring pipeline"
+        - New: fallback search path calls scoreCandidatesFromStore() which sends mock
+          candidate data through /api/score-candidates for real scoring engine evaluation
+        - Added buildScoreRequestJD() helper to deduplicate JD payload construction
+        - Added scoreCandidatesFromStore() to convert Candidate[] to CandidateInput[] and
+          route through the scoring API (same engine used for Apollo API candidates)
+        - Scored results stored in candidate store via setCandidates() so pipeline panel
+          reads scored data from store instead of raw mock data
+        - Progress UI shows real scoring steps (Retrieving → Scoring → Complete)
+        - Action Card now displays actual scoring metrics from the scoring engine
+        - Graceful fallback: if scoring API fails, raw candidates stored as before
+        - No regressions: all previously passing tests continue to pass
+        - npm run build passes cleanly
 
 ==============================================================================
 PHASE 7: P1 FEATURES (renumbered from Phase 6)

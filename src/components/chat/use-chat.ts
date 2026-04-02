@@ -478,6 +478,21 @@ interface ScoredCandidateResponse {
 }
 
 /**
+ * Build JD payload for the scoring API from JDPreviewData.
+ */
+function buildScoreRequestJD(jdData: JDPreviewData): ScoreRequestJD {
+  return {
+    title: jdData.title,
+    department: jdData.department,
+    location: jdData.location,
+    experience: jdData.experience,
+    seniority: jdData.seniority,
+    skills: jdData.skills,
+    description: jdData.description,
+  };
+}
+
+/**
  * Call the /api/score-candidates endpoint to score and rank candidates
  * using the deterministic scoring engine (server-side).
  */
@@ -500,20 +515,49 @@ async function scoreCandidatesAPI(
     source: ac.source,
   }));
 
-  const jd: ScoreRequestJD = {
-    title: jdData.title,
-    department: jdData.department,
-    location: jdData.location,
-    experience: jdData.experience,
-    seniority: jdData.seniority,
-    skills: jdData.skills,
-    description: jdData.description,
-  };
+  const response = await fetch("/api/score-candidates", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ candidates: candidateInputs, jd: buildScoreRequestJD(jdData) }),
+  });
+
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    throw new Error(
+      (errBody as { error?: string }).error ||
+        `Scoring API error: ${response.status}`,
+    );
+  }
+
+  return (await response.json()) as ScoredCandidateResponse;
+}
+
+/**
+ * Score existing candidates (e.g. from mock data) through the scoring engine API.
+ * Converts Candidate[] to CandidateInput shape and runs them through /api/score-candidates.
+ * This ensures ALL candidates go through the same deterministic scoring pipeline.
+ */
+async function scoreCandidatesFromStore(
+  candidates: Candidate[],
+  jdData: JDPreviewData,
+): Promise<ScoredCandidateResponse> {
+  const candidateInputs = candidates.map((c) => ({
+    id: c.id,
+    name: c.name,
+    headline: c.headline,
+    currentCompany: c.currentCompany,
+    currentTitle: c.currentTitle,
+    location: c.location,
+    linkedinUrl: c.linkedinUrl,
+    experience: c.experience || [],
+    education: c.education || [],
+    skills: c.skills,
+  }));
 
   const response = await fetch("/api/score-candidates", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ candidates: candidateInputs, jd }),
+    body: JSON.stringify({ candidates: candidateInputs, jd: buildScoreRequestJD(jdData) }),
   });
 
   if (!response.ok) {
@@ -1501,8 +1545,21 @@ export function useChat() {
           return;
         }
 
-        // Fallback to existing mock job matching
+        // Fallback: match query to an existing job, run candidates through scoring engine
         const match = matchJobFromQuery(trimmed);
+        const matchedJob = MOCK_JOBS.find((j) => j.id === match.jobId);
+        const rawCandidates = MOCK_CANDIDATES[match.jobId] || [];
+
+        // Build JD data from the matched job
+        const fallbackJDData: JDPreviewData = {
+          title: matchedJob?.title || match.jobTitle,
+          department: matchedJob?.department || "Engineering",
+          location: "Remote",
+          experience: "3+ years",
+          skills: matchedJob?.jd?.skills.map((s) => s.name) || [],
+          description: matchedJob?.jd?.summary || "",
+          seniority: matchedJob?.jd?.seniority || "Mid-Level",
+        };
 
         const ackMessage: ChatMessage = {
           id: `ack-${Date.now()}`,
@@ -1513,6 +1570,11 @@ export function useChat() {
         addChatMessage(ackMessage);
 
         const progressId = `progress-${Date.now() + 1}`;
+
+        progressTimers.current.forEach(clearTimeout);
+        progressTimers.current = [];
+
+        // Step 0: Searching
         const progressTimer = setTimeout(() => {
           const progressMessage: ChatMessage = {
             id: progressId,
@@ -1527,73 +1589,137 @@ export function useChat() {
             },
           };
           addChatMessage(progressMessage);
-        }, 400);
 
-        progressTimers.current.forEach(clearTimeout);
-        progressTimers.current = [progressTimer];
-
-        const stepDelays = [1900, 3400, 4900];
-
-        stepDelays.forEach((delay, i) => {
-          const stepIndex = i + 1;
-          const timer = setTimeout(() => {
-            const isLast = stepIndex === PROGRESS_STEPS.length - 1;
+          // Step 1: Retrieving
+          const step1Timer = setTimeout(() => {
             updateChatMessage(progressId, {
               progress: {
-                currentStep: stepIndex,
-                statusText: PROGRESS_STEPS[stepIndex].label,
-                isComplete: isLast,
+                currentStep: 1,
+                statusText: `Retrieving ${rawCandidates.length} candidate profiles...`,
+                isComplete: false,
               },
             });
 
-            if (isLast) {
-              // Save search context for follow-up refinements (A-4)
-              const mockCandidates = MOCK_CANDIDATES[match.jobId] || [];
-              const matchedJob = MOCK_JOBS.find((j) => j.id === match.jobId);
-              if (mockCandidates.length > 0 && matchedJob) {
-                searchContextRef.current = {
-                  jobId: match.jobId,
-                  jdData: {
-                    title: matchedJob.title,
-                    department: matchedJob.department,
-                    location: "Remote",
-                    experience: "3+ years",
-                    skills: matchedJob.jd?.skills.map((s) => s.name) || [],
-                    description: matchedJob.jd?.summary || "",
-                    seniority: matchedJob.jd?.seniority || "Mid-Level",
-                  },
-                  originalCandidates: [...mockCandidates],
-                  currentCandidates: [...mockCandidates],
-                };
-              }
+            // Step 2: Scoring via the real scoring engine API
+            const step2Timer = setTimeout(() => {
+              updateChatMessage(progressId, {
+                progress: {
+                  currentStep: 2,
+                  statusText: `Scoring ${rawCandidates.length} candidates against JD...`,
+                  isComplete: false,
+                },
+              });
 
-              const actionTimer = setTimeout(() => {
-                const actionCardData: ActionCardData = {
-                  title: "Search Complete",
-                  summary: `Found ${match.totalCandidates} candidates. ${match.highScoreCount} scored above 85% for ${match.jobTitle}.`,
-                  metrics: [
-                    { label: "Total", value: match.totalCandidates },
-                    { label: "High Score", value: match.highScoreCount },
-                    { label: "Avg Score", value: match.avgScore },
-                  ],
-                  actionLabel: "View Ranking",
-                  actionHref: `/job/${match.jobId}/pipeline`,
-                };
-                const actionCardMessage: ChatMessage = {
-                  id: `action-card-${Date.now()}`,
-                  role: "agent",
-                  content: "",
-                  timestamp: new Date(),
-                  type: "action-card",
-                  actionCard: actionCardData,
-                };
-                addChatMessage(actionCardMessage);
-              }, 600);
-              progressTimers.current.push(actionTimer);
-            }
-          }, delay);
-          progressTimers.current.push(timer);
-        });
+              // Route ALL candidates through the scoring engine — no mock scores used
+              scoreCandidatesFromStore(rawCandidates, fallbackJDData)
+                .then((scoreResponse) => {
+                  const scoredCandidates = scoreResponse.candidates;
+
+                  // Store scored candidates in candidate store (replaces mock data path)
+                  setCandidates(match.jobId, scoredCandidates);
+
+                  // Save search context for follow-up refinements (A-4)
+                  searchContextRef.current = {
+                    jobId: match.jobId,
+                    jdData: fallbackJDData,
+                    originalCandidates: [...scoredCandidates],
+                    currentCandidates: [...scoredCandidates],
+                  };
+
+                  // Complete progress
+                  updateChatMessage(progressId, {
+                    progress: {
+                      currentStep: 3,
+                      statusText: `Complete: ${scoredCandidates.length} candidates scored & ranked`,
+                      isComplete: true,
+                    },
+                  });
+
+                  // Action card with real scoring data
+                  // Note: sidebar panel opens via pipeline page useEffect when user clicks "View Ranking"
+                  const cardTimer = setTimeout(() => {
+                    const highScoreCount = scoredCandidates.filter(
+                      (c) => c.matchScore >= 80,
+                    ).length;
+                    const avgScore =
+                      scoredCandidates.length > 0
+                        ? Math.round(
+                            scoredCandidates.reduce((s, c) => s + c.matchScore, 0) /
+                              scoredCandidates.length,
+                          )
+                        : 0;
+
+                    const actionCardData: ActionCardData = {
+                      title: "Search Complete",
+                      summary: `Found ${scoredCandidates.length} candidates. ${highScoreCount} scored above 80% for ${match.jobTitle}.`,
+                      metrics: [
+                        { label: "Total", value: scoredCandidates.length },
+                        { label: "High Score", value: highScoreCount },
+                        { label: "Avg Score", value: avgScore },
+                      ],
+                      actionLabel: "View Ranking",
+                      actionHref: `/job/${match.jobId}/pipeline`,
+                    };
+                    const actionCardMessage: ChatMessage = {
+                      id: `action-card-${Date.now()}`,
+                      role: "agent",
+                      content: "",
+                      timestamp: new Date(),
+                      type: "action-card",
+                      actionCard: actionCardData,
+                    };
+                    addChatMessage(actionCardMessage);
+                  }, 600);
+                  progressTimers.current.push(cardTimer);
+                })
+                .catch(() => {
+                  // Scoring API failed — fall back to storing raw candidates
+                  setCandidates(match.jobId, rawCandidates);
+                  searchContextRef.current = {
+                    jobId: match.jobId,
+                    jdData: fallbackJDData,
+                    originalCandidates: [...rawCandidates],
+                    currentCandidates: [...rawCandidates],
+                  };
+
+                  updateChatMessage(progressId, {
+                    progress: {
+                      currentStep: 3,
+                      statusText: `Complete: ${rawCandidates.length} candidates loaded`,
+                      isComplete: true,
+                    },
+                  });
+
+                  const cardTimer = setTimeout(() => {
+                    const actionCardData: ActionCardData = {
+                      title: "Search Complete",
+                      summary: `Found ${rawCandidates.length} candidates for ${match.jobTitle}.`,
+                      metrics: [
+                        { label: "Total", value: rawCandidates.length },
+                        { label: "High Score", value: match.highScoreCount },
+                        { label: "Avg Score", value: match.avgScore },
+                      ],
+                      actionLabel: "View Ranking",
+                      actionHref: `/job/${match.jobId}/pipeline`,
+                    };
+                    const actionCardMessage: ChatMessage = {
+                      id: `action-card-${Date.now()}`,
+                      role: "agent",
+                      content: "",
+                      timestamp: new Date(),
+                      type: "action-card",
+                      actionCard: actionCardData,
+                    };
+                    addChatMessage(actionCardMessage);
+                  }, 600);
+                  progressTimers.current.push(cardTimer);
+                });
+            }, 1500);
+            progressTimers.current.push(step2Timer);
+          }, 1200);
+          progressTimers.current.push(step1Timer);
+        }, 400);
+        progressTimers.current.push(progressTimer);
       } else {
         // Non-search, non-job-creation: standard simulated agent response
         setTimeout(() => {
