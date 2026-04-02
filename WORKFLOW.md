@@ -38,6 +38,12 @@ Planner ──产出规格+功能清单──→ Generator ──实现一个功
 
 **关键约束：**
 - Generator 和 Evaluator 是独立的 agent 实例，不共享状态
+- **每次 spawn 必须是全新 context**：每次启动 Generator 或 Evaluator 子 agent 时，该 agent 的上下文必须是空的（无历史对话记忆）。它对项目的全部了解 **只能** 来自以下四个文件：
+  1. `PRODUCT_SPEC.md` — 产品规格
+  2. `claude-progress.txt` — 当前进度
+  3. `features.json` — 功能清单与测试步骤
+  4. `WORKFLOW.md` — 本工作流文档（含角色定义与规则）
+- 主控 agent 在 spawn 子 agent 时，prompt 中必须包含：让子 agent **先读取上述四个文件**，再开始工作。除此之外，主控可以附加具体的任务指令（如功能 ID、Evaluator 反馈等），但不能替代子 agent 自行读取这些文件。
 - 主控 agent 负责在两者之间传递信息（失败反馈、修复摘要等）
 - 每次只有一个 agent 在工作（串行执行，不并行）
 
