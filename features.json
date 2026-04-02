@@ -145,7 +145,7 @@
         "If PDF: verify the viewer supports scrolling and zoom.",
         "If timeline: verify work experience entries are displayed chronologically."
       ],
-      "passes": false,
+      "passes": true,
       "depends_on": [
         "C-2",
         "D-2",
