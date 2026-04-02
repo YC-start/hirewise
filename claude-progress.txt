@@ -7,7 +7,7 @@ Last updated: 2026-04-02
 Phase: Phase 7 — Evaluator sweep of P0 features + P1 development
 Evaluator passed today: ARCH-1 (82/78/80/88), FLOW-1 (82/78/80/88), A-5, LAYOUT-1
 Previously passed: A-1, A-2, A-3, A-4, A-6, B-1, B-2, B-4, D-2, D-4, LAYOUT-2, FLOW-2
-Still needs Evaluator: C-1, C-2, D-1, FLOW-3
+Still needs Evaluator: C-1, C-2, D-1 (all 12 tests pass), FLOW-3
 Not started (P1): B-5, C-3, C-4, C-5, D-3, D-5, NAV-1
 
 ==============================================================================

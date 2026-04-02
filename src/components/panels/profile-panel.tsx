@@ -276,79 +276,124 @@ function ProfileContent({
           <CompactEvaluation evaluation={candidate.aiEvaluation} />
         )}
 
-        {/* Experience timeline (compact) */}
+        {/* Experience timeline (compact with timeline decoration) */}
         {candidate.experience && candidate.experience.length > 0 && (
           <section className="mb-3">
             <h4 className="table-header text-[9px] mb-2 pb-1 border-b border-border-default">
               Experience
             </h4>
-            <div className="flex flex-col gap-2">
-              {candidate.experience.map((exp, idx) => (
-                <div key={`${exp.company}-${idx}`} className="bg-surface-tertiary/50 border border-border-default p-2">
-                  <div className="flex justify-between gap-1">
-                    <span className="text-xs text-text-primary font-medium truncate">
-                      {exp.role}
-                    </span>
-                    <span className="font-mono text-[10px] text-text-muted flex-shrink-0">
-                      {exp.period}
-                    </span>
+            <div className="relative">
+              {/* Timeline vertical line */}
+              <div
+                className="absolute left-[4px] top-1 bottom-1 w-[1px] bg-border-default"
+                aria-hidden="true"
+              />
+              <div className="flex flex-col gap-0">
+                {candidate.experience.map((exp, idx) => (
+                  <div
+                    key={`${exp.company}-${idx}`}
+                    className={`relative pl-5 ${idx === (candidate.experience?.length ?? 0) - 1 ? "pb-0" : "pb-3"}`}
+                  >
+                    {/* Square node — accent-primary */}
+                    <div
+                      className="absolute left-[1px] top-[5px] w-[7px] h-[7px] bg-accent-primary"
+                      aria-hidden="true"
+                    />
+                    <div className="bg-surface-tertiary/50 border border-border-default p-2">
+                      <div className="flex justify-between gap-1">
+                        <span className="text-xs text-text-primary font-medium truncate">
+                          {exp.role}
+                        </span>
+                        <span className="font-mono text-[10px] text-text-muted flex-shrink-0">
+                          {exp.period}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-text-secondary mt-0.5">{exp.company}</p>
+                      {exp.description && (
+                        <p className="text-[10px] text-text-muted mt-1 leading-relaxed line-clamp-2">
+                          {exp.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-[11px] text-text-secondary mt-0.5">{exp.company}</p>
-                  {exp.description && (
-                    <p className="text-[10px] text-text-muted mt-1 leading-relaxed line-clamp-2">
-                      {exp.description}
-                    </p>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </section>
         )}
 
-        {/* Education (compact) */}
+        {/* Education (compact with timeline decoration) */}
         {candidate.education && candidate.education.length > 0 && (
           <section className="mb-3">
             <h4 className="table-header text-[9px] mb-2 pb-1 border-b border-border-default">
               Education
             </h4>
-            <div className="flex flex-col gap-1.5">
-              {candidate.education.map((edu, idx) => (
-                <div key={`${edu.institution}-${idx}`} className="flex justify-between gap-1">
-                  <div className="min-w-0">
-                    <span className="text-xs text-text-primary font-medium block truncate">
-                      {edu.degree}
-                    </span>
-                    <span className="text-[11px] text-text-secondary block truncate">
-                      {edu.institution}
-                    </span>
+            <div className="relative">
+              {/* Timeline vertical line */}
+              <div
+                className="absolute left-[4px] top-1 bottom-1 w-[1px] bg-border-default"
+                aria-hidden="true"
+              />
+              <div className="flex flex-col gap-0">
+                {candidate.education.map((edu, idx) => (
+                  <div
+                    key={`${edu.institution}-${idx}`}
+                    className={`relative pl-5 ${idx === (candidate.education?.length ?? 0) - 1 ? "pb-0" : "pb-2"}`}
+                  >
+                    {/* Square node — accent-secondary */}
+                    <div
+                      className="absolute left-[1px] top-[5px] w-[7px] h-[7px] bg-accent-secondary"
+                      aria-hidden="true"
+                    />
+                    <div className="flex justify-between gap-1">
+                      <div className="min-w-0">
+                        <span className="text-xs text-text-primary font-medium block truncate">
+                          {edu.degree}
+                        </span>
+                        <span className="text-[11px] text-text-secondary block truncate">
+                          {edu.institution}
+                        </span>
+                      </div>
+                      <span className="font-mono text-[10px] text-text-muted flex-shrink-0">
+                        {edu.year}
+                      </span>
+                    </div>
                   </div>
-                  <span className="font-mono text-[10px] text-text-muted flex-shrink-0">
-                    {edu.year}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </section>
         )}
 
-        {/* Certifications (compact) */}
+        {/* Certifications (compact with timeline decoration) */}
         {candidate.certifications && candidate.certifications.length > 0 && (
           <section className="mb-3" data-testid="sidebar-certifications">
             <h4 className="table-header text-[9px] mb-2 pb-1 border-b border-border-default">
               Certifications
             </h4>
-            <div className="flex flex-col gap-1.5">
-              {candidate.certifications.map((cert) => (
-                <div
-                  key={cert}
-                  className="flex items-start gap-1.5"
-                >
-                  <span className="inline-block w-[6px] h-[6px] mt-[3px] flex-shrink-0 bg-signal-warning" aria-hidden="true" />
-                  <span className="text-[11px] text-text-primary leading-tight">
-                    {cert}
-                  </span>
-                </div>
-              ))}
+            <div className="relative">
+              {/* Timeline vertical line */}
+              <div
+                className="absolute left-[4px] top-1 bottom-1 w-[1px] bg-border-default"
+                aria-hidden="true"
+              />
+              <div className="flex flex-col gap-0">
+                {candidate.certifications.map((cert, idx) => (
+                  <div
+                    key={cert}
+                    className={`relative pl-5 ${idx === (candidate.certifications?.length ?? 0) - 1 ? "pb-0" : "pb-2"}`}
+                  >
+                    {/* Square node — signal-warning */}
+                    <div
+                      className="absolute left-[1px] top-[4px] w-[7px] h-[7px] bg-signal-warning"
+                      aria-hidden="true"
+                    />
+                    <span className="text-[11px] text-text-primary leading-tight">
+                      {cert}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
         )}
