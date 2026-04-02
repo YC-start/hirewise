@@ -4,7 +4,6 @@ import { ChatCircleDots, Briefcase, Funnel } from "@phosphor-icons/react";
 import { useSidebarStore } from "@/stores/sidebar-store";
 
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { ChatMainArea } from "@/components/chat-main-area";
 import { DataPanelSidebar } from "@/components/data-panel-sidebar";
 import { MobileChatView } from "@/components/mobile-chat-view";
 import { JobsPanelContent } from "@/components/panels/jobs-panel";
@@ -61,21 +60,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   // --- Desktop / Tablet layout ---
-  // If children are provided (non-null), render them as the main content area
-  // instead of the default ChatMainArea. This allows route pages like
-  // /job/[id]/pipeline to render PipelineView in the main area.
-  const hasMainContent = children !== null && children !== undefined;
-
+  // Each page supplies its own main content as children:
+  //   - /dashboard renders ChatMainArea
+  //   - /job/[id]/pipeline renders PipelineView
+  //   - /job/[id]/candidate/[cid] renders CandidateProfile
   return (
     <div className="flex h-screen w-full overflow-hidden bg-surface-primary">
       {/* Main Area (left/center, ~60-65%) */}
-      {hasMainContent ? (
-        <div className="flex-1 flex flex-col min-w-0 bg-surface-primary">
-          {children}
-        </div>
-      ) : (
-        <ChatMainArea />
-      )}
+      <div className="flex-1 flex flex-col min-w-0 bg-surface-primary">
+        {children}
+      </div>
 
       {/* Data Panel — Right Sidebar (~35-40%) */}
       <DataPanelSidebar />

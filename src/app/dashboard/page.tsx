@@ -1,19 +1,14 @@
 "use client";
 
+import { ChatMainArea } from "@/components/chat-main-area";
+
 /**
- * Dashboard page — Now serves as the main landing page.
+ * Dashboard page — The main landing page.
  *
- * In the ARCH-1 layout flip, the Jobs dashboard content lives in the
- * right sidebar data panel (Jobs tab). This page component is intentionally
- * minimal because AppShell (rendered by the dashboard layout) handles
- * the full layout: ChatMainArea (center) + DataPanelSidebar (right).
- *
- * The `children` prop of AppShell receives this component's output,
- * but AppShell no longer renders children in the main area — it renders
- * ChatMainArea directly. This page just needs to exist for the route.
+ * Renders ChatMainArea as the primary interaction surface (ARCH-1 layout).
+ * The Jobs dashboard content lives in the right sidebar data panel (Jobs tab),
+ * managed by the AppShell wrapper in the dashboard layout.
  */
 export default function DashboardPage() {
-  // AppShell now handles the full layout — this page is a no-op shell.
-  // Returning null since AppShell renders ChatMainArea + DataPanelSidebar directly.
-  return null;
+  return <ChatMainArea />;
 }

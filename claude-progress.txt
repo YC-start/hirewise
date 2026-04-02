@@ -3,7 +3,7 @@
   Build Progress Tracker
 ==============================================================================
 
-Last updated: 2026-04-01
+Last updated: 2026-04-02
 Phase: Phase 7 — Evaluator sweep of P0 features + P1 development
 Evaluator passed today: ARCH-1 (82/78/80/88), FLOW-1 (82/78/80/88), A-5, LAYOUT-1
 Previously passed: A-1, A-2, A-3, A-4, A-6, B-1, B-2, B-4, D-2, D-4, LAYOUT-2, FLOW-2
@@ -525,6 +525,20 @@ HOTFIXES
       - Fix: Added --spacing: 0.25rem to the @theme inline block.
       - Verified: p-3=0.75rem, p-4=1rem, p-6=1.5rem, mb-6=1.5rem, mb-8=2rem, pl-8=2rem
       - No regressions: colors, fonts, borders all unchanged.
+
+  [x] FIX: Desktop AI Chat not rendering on /dashboard (2026-04-02)
+      - Root cause: DashboardPage returned null, but Next.js wraps page output in
+        a React element before passing it as children to the layout. The AppShell
+        `hasMainContent` check (`children !== null`) evaluated to true because the
+        wrapper element is not literally null, causing ChatMainArea to be skipped.
+      - Fix: Removed fragile null-detection pattern. Dashboard page now explicitly
+        renders <ChatMainArea /> instead of returning null. Dashboard layout passes
+        children through normally. AppShell always renders children in the main area
+        (no conditional fallback needed since every page provides its own content).
+      - Files changed: dashboard/page.tsx, dashboard/layout.tsx, app-shell.tsx
+      - No regressions: pipeline and candidate pages unaffected (they already pass
+        their own content as children). Mobile layout unchanged.
+      - npm run build passes cleanly.
 
 ==============================================================================
 NOTES
