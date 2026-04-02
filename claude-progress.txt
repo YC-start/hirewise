@@ -3,12 +3,19 @@
   Build Progress Tracker
 ==============================================================================
 
-Last updated: 2026-04-02
-Phase: Phase 7 — Evaluator sweep of P0 features + P1 development
-Evaluator passed today: ARCH-1 (82/78/80/88), FLOW-1 (82/78/80/88), A-5, LAYOUT-1
-Previously passed: A-1, A-2, A-3, A-4, A-6, B-1, B-2, B-4, D-2, D-4, LAYOUT-2, FLOW-2
-Still needs Evaluator: C-1, C-2, D-1 (all 12 tests pass), FLOW-3
-Not started (P1): B-5, C-3, C-4, C-5, D-3, D-5, NAV-1
+Last updated: 2026-04-03
+Phase: Phase 8 — ALL P0 COMPLETE. Starting P1 development.
+ALL P0 PASSED (17/17): A-1, A-2, A-3, A-5, B-1, B-2, C-1, C-2, D-1, D-2, D-4,
+  LAYOUT-1, LAYOUT-2, ARCH-1, FLOW-1, FLOW-2, FLOW-3
+P1 passed: A-4, A-6, B-4
+P1 not started: B-5, C-3, C-4, C-5, D-3, D-5, NAV-1
+Today's session (2026-04-03):
+  - Fixed desktop chat disappearance bug (AppShell children null detection)
+  - Added depends_on fields to features.json for execution ordering
+  - Updated WORKFLOW.md: agent context isolation rules
+  - D-1 Evaluator PASS (82/78/85/88)
+  - FLOW-3 Evaluator PASS (78/74/76/88) — all P0 milestone reached!
+Next: P1 features by dependency order (B-5, NAV-1, C-3, C-4, C-5, then D-3, D-5)
 
 ==============================================================================
 PHASE 0: PLANNING & SPECIFICATION
