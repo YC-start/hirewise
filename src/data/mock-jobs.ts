@@ -22,7 +22,17 @@ export interface Job {
   resumes: number;
   highScore: number;
   interviews: number;
+  owner?: string;
   jd?: JobDescription;
+}
+
+/** Mock current user for owner filtering (B-5). */
+export const CURRENT_USER = "Alex Chen";
+
+/** All unique departments extracted from the job list. */
+export function getUniqueDepartments(jobs: Job[]): string[] {
+  const depts = new Set(jobs.map((j) => j.department));
+  return Array.from(depts).sort();
 }
 
 export const MOCK_JOBS: Job[] = [
@@ -34,6 +44,7 @@ export const MOCK_JOBS: Job[] = [
     resumes: 142,
     highScore: 12,
     interviews: 4,
+    owner: "Alex Chen",
     jd: {
       seniority: "Senior (5-8 years)",
       summary:
@@ -58,6 +69,7 @@ export const MOCK_JOBS: Job[] = [
     resumes: 89,
     highScore: 8,
     interviews: 2,
+    owner: "Sarah Kim",
     jd: {
       seniority: "Mid-Senior (3-6 years)",
       summary:
@@ -81,6 +93,7 @@ export const MOCK_JOBS: Job[] = [
     resumes: 0,
     highScore: 0,
     interviews: 0,
+    owner: "Alex Chen",
     jd: {
       seniority: "Lead (7-10 years)",
       summary:
@@ -105,6 +118,7 @@ export const MOCK_JOBS: Job[] = [
     resumes: 67,
     highScore: 5,
     interviews: 1,
+    owner: "Maria Lopez",
     jd: {
       seniority: "Mid (3-5 years)",
       summary:
@@ -128,6 +142,7 @@ export const MOCK_JOBS: Job[] = [
     resumes: 203,
     highScore: 18,
     interviews: 6,
+    owner: "Alex Chen",
     jd: {
       seniority: "Senior (5-8 years)",
       summary:
@@ -152,6 +167,7 @@ export const MOCK_JOBS: Job[] = [
     resumes: 34,
     highScore: 3,
     interviews: 2,
+    owner: "Sarah Kim",
     jd: {
       seniority: "Mid (2-4 years)",
       summary:

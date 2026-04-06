@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  Briefcase,
   Users,
   Star,
   CalendarCheck,
@@ -12,13 +11,20 @@ import {
   DotsThreeVertical,
   Archive,
   XCircle,
+  Funnel,
+  FunnelSimple,
+  CaretDown,
+  UserCircle,
+  X,
 } from "@phosphor-icons/react";
 import { useDashboardStore } from "@/stores/dashboard-store";
 import { useDataPanelStore } from "@/stores/data-panel-store";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import {
   computeStats,
+  getUniqueDepartments,
   STATUS_BADGE_STYLES,
+  CURRENT_USER,
   type Job,
 } from "@/data/mock-jobs";
 
@@ -52,12 +58,28 @@ function sortJobsWithClosedLast(jobs: Job[]): Job[] {
 }
 
 export function JobsPanelContent() {
-  const { viewMode, setViewMode, jobs, updateJobStatus } = useDashboardStore();
+  const {
+    viewMode,
+    setViewMode,
+    jobs,
+    updateJobStatus,
+    departmentFilter,
+    myJobsOnly,
+    setDepartmentFilter,
+    setMyJobsOnly,
+    clearFilters,
+    hasActiveFilters,
+    getFilteredJobs,
+  } = useDashboardStore();
   const { selectJob } = useDataPanelStore();
   const { setMobileActiveTab } = useSidebarStore();
-  const stats = computeStats(jobs);
 
-  const sortedJobs = sortJobsWithClosedLast(jobs);
+  const filteredJobs = getFilteredJobs();
+  const stats = computeStats(filteredJobs);
+  const allDepartments = getUniqueDepartments(jobs);
+  const isFiltered = hasActiveFilters();
+
+  const sortedJobs = sortJobsWithClosedLast(filteredJobs);
 
   const handleNewJob = () => {
     // On mobile, switch to chat tab
@@ -95,6 +117,19 @@ export function JobsPanelContent() {
         </div>
       </div>
 
+      {/* B-5: Filter bar */}
+      <FilterBar
+        departments={allDepartments}
+        departmentFilter={departmentFilter}
+        myJobsOnly={myJobsOnly}
+        isFiltered={isFiltered}
+        onDepartmentChange={setDepartmentFilter}
+        onMyJobsChange={setMyJobsOnly}
+        onClearFilters={clearFilters}
+        totalJobs={jobs.length}
+        filteredCount={filteredJobs.length}
+      />
+
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto p-3">
         {/* Stats row — compact 2-column */}
@@ -111,6 +146,22 @@ export function JobsPanelContent() {
             accent
           />
         </div>
+
+        {/* Empty state when filters produce no results */}
+        {sortedJobs.length === 0 && isFiltered && (
+          <div className="flex flex-col items-center justify-center py-8 gap-2" data-testid="no-results-message">
+            <FunnelSimple size={28} weight="bold" className="text-text-muted" />
+            <p className="text-text-secondary text-xs text-center">
+              No jobs match the current filters.
+            </p>
+            <button
+              onClick={clearFilters}
+              className="text-accent-primary text-[11px] font-mono uppercase tracking-wider hover:underline"
+            >
+              Clear Filters
+            </button>
+          </div>
+        )}
 
         {/* Jobs — Grid or List view */}
         {viewMode === "grid" ? (
@@ -217,6 +268,192 @@ function MiniStatCard({
           {value}
         </p>
       </div>
+    </div>
+  );
+}
+
+// ── B-5: Filter Bar ──────────────────────────────────────────────────────
+
+function FilterBar({
+  departments,
+  departmentFilter,
+  myJobsOnly,
+  isFiltered,
+  onDepartmentChange,
+  onMyJobsChange,
+  onClearFilters,
+  totalJobs,
+  filteredCount,
+}: {
+  departments: string[];
+  departmentFilter: string | null;
+  myJobsOnly: boolean;
+  isFiltered: boolean;
+  onDepartmentChange: (dept: string | null) => void;
+  onMyJobsChange: (on: boolean) => void;
+  onClearFilters: () => void;
+  totalJobs: number;
+  filteredCount: number;
+}) {
+  const [deptOpen, setDeptOpen] = useState(false);
+  const deptRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!deptOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (deptRef.current && !deptRef.current.contains(e.target as Node)) {
+        setDeptOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [deptOpen]);
+
+  return (
+    <div
+      className="flex-shrink-0 border-b border-border-default"
+      data-testid="filter-bar"
+    >
+      {/* Filter controls row */}
+      <div className="flex items-center gap-2 px-3 py-2">
+        <Funnel size={12} weight="bold" className="text-text-muted flex-shrink-0" />
+
+        {/* Department dropdown */}
+        <div className="relative" ref={deptRef}>
+          <button
+            onClick={() => setDeptOpen(!deptOpen)}
+            className={`flex items-center gap-1 px-2 py-1 text-[11px] font-mono border transition-colors ${
+              departmentFilter
+                ? "border-accent-primary text-accent-primary bg-accent-primary/10"
+                : "border-border-default text-text-secondary hover:text-text-primary hover:border-text-muted"
+            }`}
+            style={{ borderRadius: "2px" }}
+            data-testid="department-filter"
+            aria-expanded={deptOpen}
+          >
+            {departmentFilter || "Department"}
+            <CaretDown size={10} weight="bold" />
+          </button>
+
+          {deptOpen && (
+            <div
+              className="absolute left-0 top-full mt-1 z-50 min-w-[160px] border border-border-default bg-surface-secondary shadow-lg"
+              style={{ borderRadius: "4px" }}
+              data-testid="department-filter-dropdown"
+            >
+              {/* "All" option */}
+              <button
+                onClick={() => {
+                  onDepartmentChange(null);
+                  setDeptOpen(false);
+                }}
+                className={`w-full text-left px-3 py-1.5 text-[11px] font-mono transition-colors ${
+                  departmentFilter === null
+                    ? "text-accent-primary bg-accent-primary/10"
+                    : "text-text-secondary hover:bg-surface-tertiary hover:text-text-primary"
+                }`}
+                data-testid="department-option-all"
+              >
+                All Departments
+              </button>
+              <div className="border-t border-border-default" />
+              {departments.map((dept) => (
+                <button
+                  key={dept}
+                  onClick={() => {
+                    onDepartmentChange(dept);
+                    setDeptOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-1.5 text-[11px] font-mono transition-colors ${
+                    departmentFilter === dept
+                      ? "text-accent-primary bg-accent-primary/10"
+                      : "text-text-secondary hover:bg-surface-tertiary hover:text-text-primary"
+                  }`}
+                  data-testid={`department-option-${dept.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
+                >
+                  {dept}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* My Jobs toggle */}
+        <button
+          onClick={() => onMyJobsChange(!myJobsOnly)}
+          className={`flex items-center gap-1 px-2 py-1 text-[11px] font-mono border transition-colors ${
+            myJobsOnly
+              ? "border-accent-primary text-accent-primary bg-accent-primary/10"
+              : "border-border-default text-text-secondary hover:text-text-primary hover:border-text-muted"
+          }`}
+          style={{ borderRadius: "2px" }}
+          data-testid="my-jobs-filter"
+          aria-pressed={myJobsOnly}
+        >
+          <UserCircle size={12} weight={myJobsOnly ? "fill" : "bold"} />
+          My Jobs
+        </button>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Clear filters */}
+        {isFiltered && (
+          <button
+            onClick={onClearFilters}
+            className="flex items-center gap-1 px-2 py-1 text-[11px] font-mono text-text-muted hover:text-signal-danger transition-colors"
+            data-testid="clear-filters"
+          >
+            <X size={10} weight="bold" />
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* Active filter summary — only when filtering */}
+      {isFiltered && (
+        <div
+          className="flex items-center gap-2 px-3 pb-2"
+          data-testid="filter-summary"
+        >
+          <span className="text-text-muted text-[10px] font-mono">
+            Showing {filteredCount} of {totalJobs}
+          </span>
+          {departmentFilter && (
+            <span
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-mono border border-accent-primary/40 text-accent-primary bg-accent-primary/5"
+              style={{ borderRadius: "2px" }}
+              data-testid="active-filter-department"
+            >
+              {departmentFilter}
+              <button
+                onClick={() => onDepartmentChange(null)}
+                className="hover:text-text-primary transition-colors"
+                aria-label={`Remove ${departmentFilter} filter`}
+              >
+                <X size={8} weight="bold" />
+              </button>
+            </span>
+          )}
+          {myJobsOnly && (
+            <span
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-mono border border-accent-primary/40 text-accent-primary bg-accent-primary/5"
+              style={{ borderRadius: "2px" }}
+              data-testid="active-filter-my-jobs"
+            >
+              {CURRENT_USER}
+              <button
+                onClick={() => onMyJobsChange(false)}
+                className="hover:text-text-primary transition-colors"
+                aria-label="Remove My Jobs filter"
+              >
+                <X size={8} weight="bold" />
+              </button>
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

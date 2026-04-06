@@ -3,19 +3,26 @@
   Build Progress Tracker
 ==============================================================================
 
-Last updated: 2026-04-03
-Phase: Phase 8 — ALL P0 COMPLETE. Starting P1 development.
+Last updated: 2026-04-06
+Phase: Phase 8 — ALL P0 COMPLETE. Continuing P1 development.
 ALL P0 PASSED (17/17): A-1, A-2, A-3, A-5, B-1, B-2, C-1, C-2, D-1, D-2, D-4,
   LAYOUT-1, LAYOUT-2, ARCH-1, FLOW-1, FLOW-2, FLOW-3
 P1 passed: A-4, A-6, B-4
-P1 not started: B-5, C-3, C-4, C-5, D-3, D-5, NAV-1
-Today's session (2026-04-03):
-  - Fixed desktop chat disappearance bug (AppShell children null detection)
-  - Added depends_on fields to features.json for execution ordering
-  - Updated WORKFLOW.md: agent context isolation rules
-  - D-1 Evaluator PASS (82/78/85/88)
-  - FLOW-3 Evaluator PASS (78/74/76/88) — all P0 milestone reached!
-Next: P1 features by dependency order (B-5, NAV-1, C-3, C-4, C-5, then D-3, D-5)
+P1 awaiting eval: B-5
+P1 not started: C-3, C-4, C-5, D-3, D-5, NAV-1
+Today's session (2026-04-06):
+  - B-5: Dashboard filtering by owner/department — implemented
+    - Filter bar with department dropdown + "My Jobs" toggle in jobs panel
+    - Department dropdown: lists all unique departments, highlight active selection
+    - My Jobs filter: filters to jobs owned by CURRENT_USER (Alex Chen)
+    - Active filter summary: shows "Showing N of M" + removable filter chips
+    - Clear all filters: single-click resets both filters
+    - Empty state: "No jobs match" message with clear link when filters yield 0
+    - Stats (candidates, high score) dynamically recalculate for filtered jobs
+    - Store logic already existed in dashboard-store.ts; UI wired into jobs-panel.tsx
+    - No regressions: all B-4, A-6 evaluator tests still pass
+    - npm run build passes cleanly
+Next: Evaluator review for B-5, then NAV-1, C-3, C-4, C-5, D-3, D-5
 
 ==============================================================================
 PHASE 0: PLANNING & SPECIFICATION
@@ -516,7 +523,26 @@ PHASE 7: P1 FEATURES (renumbered from Phase 6)
       - Evaluator test: tests/eval-b4.spec.ts — 3 tests — all pass
       - No regressions on existing tests (12 key tests verified)
       - npm run build passes cleanly
-  [ ] B-5  Dashboard filtering by owner/department
+  [x] B-5  Dashboard filtering by owner/department  [AWAITING EVALUATOR REVIEW]
+      - Filter bar component added to jobs-panel.tsx between toolbar and content
+      - Department dropdown: custom dropdown with all unique departments from job list
+        - "All Departments" option to clear department filter
+        - Active selection highlighted with accent-primary border + text
+        - data-testid on trigger, dropdown, and each option
+      - "My Jobs" toggle: filters jobs to those owned by CURRENT_USER (Alex Chen)
+        - aria-pressed for accessibility, accent-primary highlight when active
+      - Active filter summary row: "Showing N of M" + removable filter chips
+        - Each chip has an X button to remove that specific filter
+      - "Clear" button appears when any filter is active (removes all)
+      - Empty state: FunnelSimple icon + message + "Clear Filters" link
+      - Stats row recalculates on filtered jobs (candidates, high score)
+      - Store logic: dashboard-store.ts already had B-5 actions scaffolded:
+        departmentFilter, myJobsOnly, setDepartmentFilter, setMyJobsOnly,
+        clearFilters, hasActiveFilters, getFilteredJobs
+      - Follows Industrial Clarity design: monospace font, 11px text, 2px radius,
+        accent-primary active states, border-default inactive states
+      - No regressions: B-4, A-6 evaluator tests all pass (9 tests verified)
+      - npm run build passes cleanly
   [ ] C-3  Bulk actions on candidates
   [ ] C-4  Inline candidate preview expansion
   [ ] C-5  Sub-score sorting and skill filtering
