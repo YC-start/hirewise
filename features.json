@@ -446,7 +446,7 @@
         "Verify the chip's text pre-fills the chat input field.",
         "Verify suggestions are contextual (different suggestions on /dashboard vs /job/:id/pipeline)."
       ],
-      "passes": false,
+      "passes": true,
       "depends_on": [
         "ARCH-1"
       ]
