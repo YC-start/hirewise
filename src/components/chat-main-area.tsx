@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { PaperPlaneRight, Lightning } from "@phosphor-icons/react";
-import { ChatBubble, ProgressIndicator, ActionCard, JDPreviewCard, useChat } from "@/components/chat";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { PaperPlaneRight } from "@phosphor-icons/react";
+import { ChatBubble, ProgressIndicator, ActionCard, JDPreviewCard, QuickCommandChips, useChat } from "@/components/chat";
 
 /**
  * ChatMainArea — The primary AI conversation surface (center of the layout).
@@ -10,17 +10,11 @@ import { ChatBubble, ProgressIndicator, ActionCard, JDPreviewCard, useChat } fro
  * Occupies ~60-65% of the viewport width on desktop. Contains:
  * - Conversation flow (chat bubbles, progress indicators, action cards)
  * - Input bar fixed at the bottom
- * - Empty state with welcome message and quick-command suggestions
+ * - Contextual quick-command suggestion chips (NAV-1)
  *
  * Design: surface-primary (#0D0D0D) background, conversation centered
  * with max-width ~800px.
  */
-
-const QUICK_COMMANDS = [
-  { label: "Create a new job", prompt: "I need to hire a senior Go backend engineer in Berlin, 5+ years experience, must know Kubernetes" },
-  { label: "Find senior engineers", prompt: "Find me 50 senior backend engineers with Go + Kubernetes experience" },
-  { label: "Search designers", prompt: "Search for product designers with Figma and design systems experience" },
-];
 
 export function ChatMainArea() {
   const { messages, handleSend, handleJDConfirm, handleJDModify } = useChat();
@@ -47,11 +41,23 @@ export function ChatMainArea() {
     }
   };
 
-  const handleQuickCommand = (prompt: string) => {
-    handleSend(prompt);
-  };
+  /** Pre-fill input with the chip's prompt text (NAV-1: pre-fill, not send). */
+  const handleChipSelect = useCallback((prompt: string) => {
+    setInput(prompt);
+    // Focus the input so the user can review / edit before sending
+    inputRef.current?.focus();
+  }, []);
 
-  const showEmptyState = messages.length <= 1; // Only welcome message
+  // Show suggestions in empty state (only welcome message) OR after a completed task
+  const lastMsg = messages[messages.length - 1];
+  const isPostTask =
+    lastMsg &&
+    messages.length > 1 &&
+    (lastMsg.type === "action-card" ||
+      (lastMsg.type === "text" &&
+        lastMsg.role === "agent" &&
+        /created|complete|done|added|scheduled/i.test(lastMsg.content)));
+  const showSuggestions = messages.length <= 1 || isPostTask;
 
   return (
     <div
@@ -88,25 +94,13 @@ export function ChatMainArea() {
             ),
           )}
 
-          {/* Quick command suggestions — shown only in empty state */}
-          {showEmptyState && (
-            <div className="mt-8" data-testid="quick-commands">
-              <p className="text-text-muted text-xs font-mono uppercase tracking-widest mb-3">
-                Quick actions
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {QUICK_COMMANDS.map((cmd) => (
-                  <button
-                    key={cmd.label}
-                    onClick={() => handleQuickCommand(cmd.prompt)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono text-text-secondary border border-border-default bg-surface-secondary hover:bg-surface-tertiary hover:text-text-primary transition-colors"
-                    data-testid={`quick-cmd-${cmd.label.toLowerCase().replace(/\s+/g, "-")}`}
-                  >
-                    <Lightning size={12} weight="bold" />
-                    {cmd.label}
-                  </button>
-                ))}
-              </div>
+          {/* Contextual quick-command suggestion chips (NAV-1) */}
+          {showSuggestions && (
+            <div className="mt-8">
+              <QuickCommandChips
+                messages={messages}
+                onSelect={handleChipSelect}
+              />
             </div>
           )}
 

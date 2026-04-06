@@ -8,8 +8,23 @@ Phase: Phase 8 — ALL P0 COMPLETE. Continuing P1 development.
 ALL P0 PASSED (17/17): A-1, A-2, A-3, A-5, B-1, B-2, C-1, C-2, D-1, D-2, D-4,
   LAYOUT-1, LAYOUT-2, ARCH-1, FLOW-1, FLOW-2, FLOW-3
 P1 passed: A-4, A-6, B-4, B-5
-P1 not started: C-3, C-4, C-5, D-3, D-5, NAV-1
+P1 in progress: NAV-1
+P1 not started: C-3, C-4, C-5, D-3, D-5
 Today's session (2026-04-06):
+  - NAV-1: Quick-command suggestions in chat — IMPLEMENTATION COMPLETE, AWAITING EVALUATOR
+    - New component: QuickCommandChips (src/components/chat/quick-command-chips.tsx)
+    - Contextual suggestion sets: Dashboard (4 chips), Pipeline (4 chips),
+      Candidate (3 chips), Post-task (3 chips)
+    - Chips pre-fill the chat input field (not send) so user can review/edit
+    - Route-based context: usePathname() detects /dashboard vs /job/:id/pipeline
+      vs /job/:id/candidate/:cid for different suggestion sets
+    - Pipeline suggestions personalized with actual job title when job is selected
+    - Post-task detection: shows follow-up suggestions after action-card messages
+    - Works on both desktop (ChatMainArea) and mobile (MobileChatView)
+    - Design: monospace font, surface-secondary bg, accent-primary hover states,
+      Phosphor icons per chip, matching Industrial Clarity language
+    - No regressions: all ARCH-1 (8/8), B-5 (6/6), A-1 (1/1), FLOW-1 (7/7),
+      A-6 (3/3) tests pass
   - B-5: Dashboard filtering by owner/department — EVALUATOR PASSED
     - Scores: Design 82 / Originality 78 / Craft 80 / Functionality 88
     - 6 Playwright tests pass (full lifecycle, combined filters, empty state,
@@ -17,7 +32,7 @@ Today's session (2026-04-06):
     - No regressions on B-4 tests
     - Filter bar: dark theme consistent, chartreuse active states, monospace chips
     - Department dropdown + My Jobs toggle + clear all + removable chips all functional
-Next: NAV-1, C-3, C-4, C-5, D-3, D-5
+Next: NAV-1 (evaluator), C-3, C-4, C-5, D-3, D-5
 
 ==============================================================================
 PHASE 0: PLANNING & SPECIFICATION
