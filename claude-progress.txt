@@ -7,10 +7,24 @@ Last updated: 2026-04-06
 Phase: Phase 8 — ALL P0 COMPLETE. Continuing P1 development.
 ALL P0 PASSED (17/17): A-1, A-2, A-3, A-5, B-1, B-2, C-1, C-2, D-1, D-2, D-4,
   LAYOUT-1, LAYOUT-2, ARCH-1, FLOW-1, FLOW-2, FLOW-3
-P1 passed: A-4, A-6, B-4, B-5, NAV-1, C-3, C-4, C-5
-P1 awaiting evaluator: D-3
+P1 passed: A-4, A-6, B-4, B-5, NAV-1, C-3, C-4, C-5, D-3
 P1 not started: D-5
 Today's session (2026-04-06):
+  - D-3: AI-generated interview questions — EVALUATOR PASSED
+    - Scores: Design 84 / Originality 76 / Craft 86 / Functionality 92
+    - Generator's evaluator-d3.spec.ts: 10/10 PASS
+    - New evaluator-d3-review.spec.ts (independent re-test): 10/10 PASS
+    - Combined D-3 sweep: 20/20 PASS
+    - Regression sweep (c1-c5, b4, b5, nav1): 58/58 PASS
+    - D-1 / D-2 evaluator specs: 14/14 PASS
+    - Pre-existing baseline failures (verified against fc17004^, NOT D-3 regressions):
+      eval-d1.spec.ts (1), eval-d4.spec.ts (9), eval-a2/b1/b2 (4) — all from
+      ARCH-1 layout flip leaving unscoped locators that match duplicated sidebar copies
+    - Evaluator notes for future polish (non-blocking):
+      * Add subtle accent stripe on left edge of question cards per category
+      * Push WHY rationale row contrast 1 step (currently borderline at <1440 width)
+      * Consider re-roll button, copy-to-clipboard, export-to-interviewer
+      * Tab transition timing (150ms color transition) flaked Evaluator's first run
   - D-3: AI-generated interview questions — IMPLEMENTED (awaiting evaluator)
     - Candidate profile gains Overview / Interview Prep tab switcher
     - Overview tab: unchanged — still shows D-2 AI Eval Report, D-1 timelines,
