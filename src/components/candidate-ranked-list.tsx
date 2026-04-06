@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { getCandidatesForJob } from "@/data/mock-candidates";
 import { useCandidateStore } from "@/stores/candidate-store";
 import { useSelectionStore } from "@/stores/selection-store";
 import { BulkActionToolbar } from "@/components/bulk-action-toolbar";
 import { CandidateInlinePreview } from "@/components/candidate-inline-preview";
+import {
+  CandidateSortFilter,
+  type SortDimension,
+} from "@/components/candidate-sort-filter";
 import type { Candidate, PipelineStatus } from "@/data/mock-candidates";
 
 const EMPTY_CANDIDATES: Candidate[] = [];
@@ -80,6 +84,10 @@ export function CandidateRankedList({ jobId }: CandidateRankedListProps) {
   // Inline preview expansion state (C-4)
   const [expandedCandidateId, setExpandedCandidateId] = useState<string | null>(null);
 
+  // Sort & filter state (C-5)
+  const [sortBy, setSortBy] = useState<SortDimension>("matchScore");
+  const [skillFilter, setSkillFilter] = useState<string | null>(null);
+
   // Track last clicked candidate for shift-click range selection
   const lastClickedRef = useRef<string | null>(null);
 
@@ -89,14 +97,52 @@ export function CandidateRankedList({ jobId }: CandidateRankedListProps) {
   // Use API/refinement candidates if they've been explicitly set (even if empty after filtering),
   // otherwise fall back to mock data for mock jobs that haven't been searched.
   // Apply any status overrides from bulk actions (C-3).
-  const rawCandidates = hasCandidatesBeenSet
-    ? [...apiCandidates].sort((a, b) => b.matchScore - a.matchScore)
+  const baseCandidates = hasCandidatesBeenSet
+    ? apiCandidates
     : getCandidatesForJob(jobId);
 
-  const candidates = rawCandidates.map((c) => {
-    const override = statusOverrides[`${jobId}:${c.id}`];
-    return override ? { ...c, pipelineStatus: override } : c;
-  });
+  // Collect all unique skills across candidates for the filter dropdown (C-5)
+  const availableSkills = useMemo(() => {
+    const skillSet = new Set<string>();
+    for (const c of baseCandidates) {
+      for (const s of c.skills) {
+        skillSet.add(s);
+      }
+    }
+    return Array.from(skillSet).sort();
+  }, [baseCandidates]);
+
+  // Apply skill filter, then sort by selected dimension (C-5)
+  const candidates = useMemo(() => {
+    let filtered = baseCandidates;
+
+    // Apply skill filter
+    if (skillFilter) {
+      filtered = filtered.filter((c) =>
+        c.skills.some((s) => s === skillFilter)
+      );
+    }
+
+    // Apply status overrides (C-3)
+    const withOverrides = filtered.map((c) => {
+      const override = statusOverrides[`${jobId}:${c.id}`];
+      return override ? { ...c, pipelineStatus: override } : c;
+    });
+
+    // Sort by selected dimension (descending)
+    return [...withOverrides].sort((a, b) => {
+      switch (sortBy) {
+        case "technicalFit":
+          return b.subScores.technicalFit - a.subScores.technicalFit;
+        case "cultureFit":
+          return b.subScores.cultureFit - a.subScores.cultureFit;
+        case "experienceDepth":
+          return b.subScores.experienceDepth - a.subScores.experienceDepth;
+        default:
+          return b.matchScore - a.matchScore;
+      }
+    });
+  }, [baseCandidates, skillFilter, sortBy, statusOverrides, jobId]);
 
   const candidateIds = candidates.map((c) => c.id);
 
@@ -144,7 +190,8 @@ export function CandidateRankedList({ jobId }: CandidateRankedListProps) {
     [jobId, bulkUpdateStatus]
   );
 
-  if (candidates.length === 0) {
+  // No candidates at all (no filter active)
+  if (baseCandidates.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center h-full">
         <div className="text-center">
@@ -158,6 +205,15 @@ export function CandidateRankedList({ jobId }: CandidateRankedListProps) {
 
   return (
     <div className="flex flex-col h-full" data-testid="candidate-ranked-list">
+      {/* Sort & filter bar (C-5) */}
+      <CandidateSortFilter
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        skillFilter={skillFilter}
+        onSkillFilterChange={setSkillFilter}
+        availableSkills={availableSkills}
+      />
+
       {/* Table header */}
       <div
         className="flex items-center h-9 px-4 border-b border-border-default bg-surface-primary flex-shrink-0"
@@ -187,23 +243,43 @@ export function CandidateRankedList({ jobId }: CandidateRankedListProps) {
 
       {/* Candidate rows */}
       <div className="flex-1 overflow-y-auto" data-testid="candidate-list-body">
-        {candidates.map((candidate, index) => (
-          <div key={candidate.id}>
-            <CandidateRow
-              candidate={candidate}
-              rank={index + 1}
-              jobId={jobId}
-              isOdd={index % 2 === 1}
-              isSelected={effectiveSelection.has(candidate.id)}
-              isExpanded={expandedCandidateId === candidate.id}
-              onSelect={handleRowSelect}
-              onExpand={handleRowExpand}
-            />
-            {expandedCandidateId === candidate.id && (
-              <CandidateInlinePreview candidate={candidate} jobId={jobId} />
-            )}
+        {candidates.length === 0 && skillFilter ? (
+          <div
+            className="flex items-center justify-center py-12"
+            data-testid="filter-empty-state"
+          >
+            <div className="text-center">
+              <p className="text-text-muted text-sm font-mono mb-2">
+                No candidates match skill &ldquo;{skillFilter}&rdquo;
+              </p>
+              <button
+                onClick={() => setSkillFilter(null)}
+                className="text-accent-primary text-[11px] font-mono font-medium hover:underline"
+                data-testid="filter-empty-clear"
+              >
+                Clear filter
+              </button>
+            </div>
           </div>
-        ))}
+        ) : (
+          candidates.map((candidate, index) => (
+            <div key={candidate.id}>
+              <CandidateRow
+                candidate={candidate}
+                rank={index + 1}
+                jobId={jobId}
+                isOdd={index % 2 === 1}
+                isSelected={effectiveSelection.has(candidate.id)}
+                isExpanded={expandedCandidateId === candidate.id}
+                onSelect={handleRowSelect}
+                onExpand={handleRowExpand}
+              />
+              {expandedCandidateId === candidate.id && (
+                <CandidateInlinePreview candidate={candidate} jobId={jobId} />
+              )}
+            </div>
+          ))
+        )}
       </div>
 
       {/* Bulk action toolbar (C-3) */}

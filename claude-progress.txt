@@ -8,9 +8,19 @@ Phase: Phase 8 — ALL P0 COMPLETE. Continuing P1 development.
 ALL P0 PASSED (17/17): A-1, A-2, A-3, A-5, B-1, B-2, C-1, C-2, D-1, D-2, D-4,
   LAYOUT-1, LAYOUT-2, ARCH-1, FLOW-1, FLOW-2, FLOW-3
 P1 passed: A-4, A-6, B-4, B-5, NAV-1, C-3, C-4
-P1 in progress: (none)
-P1 not started: C-5, D-3, D-5
+P1 in progress: C-5 (implemented, awaiting evaluator)
+P1 not started: D-3, D-5
 Today's session (2026-04-06):
+  - C-5: Sub-score sorting and skill filtering — IMPLEMENTED (awaiting evaluator)
+    - Sort dropdown in filter bar: Overall Score (default), Technical Fit, Culture Fit, Experience Depth
+    - Selecting a sub-score dimension re-sorts candidates descending by that dimension
+    - Skill filter dropdown with search: filters candidates to only those with the selected skill
+    - Clear filter button restores full list; reset sort returns to Overall Score
+    - Empty state when filter produces zero results with clear action
+    - Available skills collected dynamically from all candidates in the pipeline
+    - New file: candidate-sort-filter.tsx (sort dropdown + skill filter dropdown component)
+    - Modified: candidate-ranked-list.tsx (sort/filter state, useMemo for derived candidates)
+    - No regressions: C-1 (11/11), C-2 (16/16), C-3 (9/9), C-4 (11/11), B-4 (3/3), B-5 (6/6)
   - C-4: Inline candidate preview expansion — EVALUATOR PASSED
     - Scores: Design 80 / Originality 76 / Craft 82 / Functionality 88
     - 11 Playwright tests pass (row expand, score breakdown, all skills,
