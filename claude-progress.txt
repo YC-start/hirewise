@@ -7,10 +7,16 @@ Last updated: 2026-04-06
 Phase: Phase 8 — ALL P0 COMPLETE. Continuing P1 development.
 ALL P0 PASSED (17/17): A-1, A-2, A-3, A-5, B-1, B-2, C-1, C-2, D-1, D-2, D-4,
   LAYOUT-1, LAYOUT-2, ARCH-1, FLOW-1, FLOW-2, FLOW-3
-P1 passed: A-4, A-6, B-4, B-5, NAV-1, C-3
-P1 in progress: C-4 (implemented, awaiting evaluator)
+P1 passed: A-4, A-6, B-4, B-5, NAV-1, C-3, C-4
+P1 in progress: (none)
 P1 not started: C-5, D-3, D-5
 Today's session (2026-04-06):
+  - C-4: Inline candidate preview expansion — EVALUATOR PASSED
+    - Scores: Design 80 / Originality 76 / Craft 82 / Functionality 88
+    - 11 Playwright tests pass (row expand, score breakdown, all skills,
+      AI summary, strengths/gaps, View Full Profile button, navigation,
+      toggle collapse, switch candidate, checkbox isolation, design audit)
+    - No regressions: C-1 (11/11), C-2 (16/16), C-3 (9/9), B-4 (3/3), NAV-1 (7/7)
   - C-4: Inline candidate preview expansion — IMPLEMENTED (awaiting evaluator)
     - Clicking candidate row (not checkbox) toggles inline preview panel below
     - Preview shows: score breakdown with dimension bars, all skills,

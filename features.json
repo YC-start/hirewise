@@ -328,7 +328,7 @@
         "Verify a 'View Full Profile' link/button is present.",
         "Click 'View Full Profile' — verify navigation to /job/:id/candidate/:cid."
       ],
-      "passes": false,
+      "passes": true,
       "depends_on": [
         "C-2"
       ]
