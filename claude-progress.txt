@@ -4,11 +4,11 @@
 ==============================================================================
 
 Last updated: 2026-04-06
-Phase: Phase 8 — ALL P0 COMPLETE. Continuing P1 development.
+Phase: Phase 8 — ALL P0 COMPLETE. Closing out the P1 backlog.
 ALL P0 PASSED (17/17): A-1, A-2, A-3, A-5, B-1, B-2, C-1, C-2, D-1, D-2, D-4,
   LAYOUT-1, LAYOUT-2, ARCH-1, FLOW-1, FLOW-2, FLOW-3
 P1 passed: A-4, A-6, B-4, B-5, NAV-1, C-3, C-4, C-5, D-3
-P1 not started: D-5
+P1 awaiting evaluator: D-5 (last P1)
 Today's session (2026-04-06):
   - D-3: AI-generated interview questions — EVALUATOR PASSED
     - Scores: Design 84 / Originality 76 / Craft 86 / Functionality 92
@@ -700,7 +700,79 @@ PHASE 7: P1 FEATURES (renumbered from Phase 6)
   [ ] C-4  Inline candidate preview expansion
   [ ] C-5  Sub-score sorting and skill filtering
   [~] D-3  AI-generated interview questions  [AWAITING EVALUATOR REVIEW]
-  [ ] D-5  Internal notes on candidate
+  [~] D-5  Internal notes on candidate  [AWAITING EVALUATOR REVIEW]
+      - New store: src/stores/notes-store.ts
+        - Zustand v5 with persist middleware (zustand/middleware)
+        - state: notesByCandidate: Record<"${jobId}:${cid}", Note[]>
+        - actions: addNote, getNotes, removeNote
+        - Persisted to localStorage under key "hirewise-notes", version 1
+        - partialize() stores only notesByCandidate (no functions)
+        - Note shape: { id, jobId, candidateId, body, author, createdAt }
+        - id = `note-${Date.now()}-${rand6}` — deterministic ordering,
+          collision-safe within the same millisecond
+        - addNote trims whitespace; empty bodies become no-ops
+        - getNotes returns newest-first (sorted at read time, raw storage
+          keeps insertion order so persistence diffs stay stable)
+        - Scope key design lets the same candidate id appear under multiple
+          jobs without cross-contamination — each role has its own thread
+      - New component: src/components/candidate-notes.tsx
+        - "Notes & Activity" tab content for candidate-profile.tsx
+        - Subscribes to notesByCandidate map directly (avoids returning
+          new array from a selector every render per Zustand guidance)
+        - mounted flag (useEffect) gates the feed render to sidestep
+          SSR/CSR hydration mismatch caused by Date.now() in relative
+          timestamps + persist rehydration after mount
+        - Compose form:
+          - surface-secondary card, 1px border-default
+          - Header strip shows "Posting as Alex Chen" (accent-secondary)
+            + live trimmed character count (mono)
+          - Textarea: bg-transparent, Inter 14px, min-height 80px, resize-y
+            vertical, placeholder "Add a note for the hiring team..."
+          - Footer strip shows Ctrl+Enter hint + pill Post Note button
+          - Post Note: accent-primary bg, surface-primary text, PaperPlaneTilt
+            icon, opacity-40 cursor-not-allowed when trimmed draft is empty
+          - Ctrl/Cmd+Enter keyboard shortcut posts the note
+        - Activity feed:
+          - Vertical timeline echoing D-1 experience/education rails
+          - 9x9px accent-secondary (teal) square node per note, anchored
+            to the note card top
+          - Note card: surface-secondary bg, 1px border, Inter 13px author,
+            mono 11px relative timestamp with absolute datetime tooltip
+            via <time title> + ISO dateTime attribute
+          - Body: Inter 14px, whitespace-pre-wrap, break-words
+        - Empty state: dashed-border card with friendly prompt, textarea
+          remains visible above
+        - Relative time helper: "just now" / "Ns" / "Nm" / "Nh" / "Nd" ago,
+          fallback to short absolute date past 14 days
+        - Author is always CURRENT_USER from src/data/mock-jobs.ts ("Alex Chen"),
+          matching B-5 owner filter — in a production build this would
+          read from an auth session
+      - Modified: src/components/candidate-profile.tsx
+        - ProfileTab union expanded to "overview" | "interview-prep" | "notes"
+        - Third TabButton "Notes & Activity" wired to testid notes-tab
+        - Panel rendering: <CandidateNotes candidateId jobId candidateName />
+          inside the activeTab === "notes" branch
+        - Doc comment updated to reference D-5 alongside D-1/D-2/D-3/D-4
+      - data-testids for Evaluator Playwright specs:
+        - notes-tab, notes-tab-panel, notes-header, notes-count
+        - note-compose-form, note-input, note-char-count, note-submit-btn
+        - notes-empty-state, notes-feed
+        - note-item (multiple), note-author, note-timestamp, note-body
+      - Persistence strategy note: single localStorage scope is sufficient
+        for the demo. In the real system this would be replaced with a
+        Supabase table `candidate_notes` + realtime subscription scoped
+        to the job's hiring team.
+      - Manual verification against /job/1/candidate/c1-01 (Liam Chen):
+        - Notes & Activity tab visible and clickable
+        - Empty state renders on first visit
+        - Posting a note immediately shows it in the feed with author
+          "Alex Chen" + relative timestamp "just now"
+        - Tab round-trip Overview → Notes preserves the note
+        - Full page reload (F5) preserves the note via localStorage
+        - Navigating to c1-02 shows its own empty state (no leakage)
+        - Back to c1-01 still shows the original note
+        - Whitespace-only draft keeps Post Note disabled
+      - npm run build: PASS (Next.js 16.2.1 / Turbopack, TS clean)
   [ ] NAV-1 Quick-command suggestions in chat
 
 ==============================================================================

@@ -5,14 +5,15 @@ import Link from "next/link";
 import type { Candidate, Experience, Education, AIEvaluation, DimensionScore, PipelineStatus } from "@/data/mock-candidates";
 import type { JobDescription } from "@/data/mock-jobs";
 import { InterviewPrep } from "@/components/interview-prep";
+import { CandidateNotes } from "@/components/candidate-notes";
 
 /**
- * CandidateProfile — Candidate detail page content (D-1, D-2, D-3, D-4).
+ * CandidateProfile — Candidate detail page content (D-1, D-2, D-3, D-4, D-5).
  *
  * Displays:
  * - Header: candidate name, match score (large + color-coded bar), pipeline status
  * - Action bar: pipeline stage transition buttons (D-4)
- * - Tab switcher: Overview / Interview Prep
+ * - Tab switcher: Overview / Interview Prep / Notes & Activity
  * - Overview tab:
  *   - AI Evaluation Report (D-2)
  *   - Structured timeline: work experience in reverse chronological order
@@ -20,6 +21,9 @@ import { InterviewPrep } from "@/components/interview-prep";
  *   - Certifications section (if present)
  * - Interview Prep tab (D-3):
  *   - AI-generated tailored interview questions grouped by category
+ * - Notes & Activity tab (D-5):
+ *   - Compose box + activity feed of internal team notes, persisted via
+ *     the notes-store (Zustand persist middleware).
  *
  * Design: "Industrial Clarity" — dark theme, timeline with square nodes,
  * JetBrains Mono for time periods, table-header section labels.
@@ -32,7 +36,7 @@ interface CandidateProfileProps {
   jd?: JobDescription;
 }
 
-type ProfileTab = "overview" | "interview-prep";
+type ProfileTab = "overview" | "interview-prep" | "notes";
 
 /** Returns the CSS color for a score based on range. */
 function getScoreColor(score: number): string {
@@ -258,6 +262,12 @@ export function CandidateProfile({ candidate, jobId, jobTitle, jd }: CandidatePr
               onClick={() => setActiveTab("interview-prep")}
               testId="tab-interview-prep"
             />
+            <TabButton
+              label="Notes & Activity"
+              isActive={activeTab === "notes"}
+              onClick={() => setActiveTab("notes")}
+              testId="notes-tab"
+            />
           </div>
 
           {activeTab === "overview" && (
@@ -277,6 +287,14 @@ export function CandidateProfile({ candidate, jobId, jobTitle, jd }: CandidatePr
               candidate={candidate}
               jd={jd}
               jobTitle={jobTitle}
+            />
+          )}
+
+          {activeTab === "notes" && (
+            <CandidateNotes
+              candidateId={candidate.id}
+              jobId={jobId}
+              candidateName={candidate.name}
             />
           )}
 
