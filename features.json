@@ -409,7 +409,7 @@
         "Verify only jobs owned by the current user are displayed.",
         "Clear all filters — verify the full job list is restored."
       ],
-      "passes": false,
+      "passes": true,
       "depends_on": [
         "B-1",
         "B-2"
