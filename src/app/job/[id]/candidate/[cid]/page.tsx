@@ -37,6 +37,7 @@ export default function CandidateProfilePage() {
   const dashboardJobs = useDashboardStore((s) => s.jobs);
   const job = dashboardJobs.find((j) => j.id === id);
   const jobTitle = job?.title || "Unknown Position";
+  const jd = job?.jd;
 
   if (!candidate) {
     return (
@@ -50,7 +51,7 @@ export default function CandidateProfilePage() {
 
   return (
     <AppShell>
-      <CandidateProfile candidate={candidate} jobId={id} jobTitle={jobTitle} />
+      <CandidateProfile candidate={candidate} jobId={id} jobTitle={jobTitle} jd={jd} />
     </AppShell>
   );
 }

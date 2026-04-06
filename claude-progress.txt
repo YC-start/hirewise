@@ -8,8 +8,76 @@ Phase: Phase 8 — ALL P0 COMPLETE. Continuing P1 development.
 ALL P0 PASSED (17/17): A-1, A-2, A-3, A-5, B-1, B-2, C-1, C-2, D-1, D-2, D-4,
   LAYOUT-1, LAYOUT-2, ARCH-1, FLOW-1, FLOW-2, FLOW-3
 P1 passed: A-4, A-6, B-4, B-5, NAV-1, C-3, C-4, C-5
-P1 not started: D-3, D-5
+P1 awaiting evaluator: D-3
+P1 not started: D-5
 Today's session (2026-04-06):
+  - D-3: AI-generated interview questions — IMPLEMENTED (awaiting evaluator)
+    - Candidate profile gains Overview / Interview Prep tab switcher
+    - Overview tab: unchanged — still shows D-2 AI Eval Report, D-1 timelines,
+      education, certifications. All existing data-testids preserved.
+    - Interview Prep tab (new): shows tailored questions grouped by category
+    - Deterministic engine: src/lib/interview-questions.ts
+      - Pure functions, no Math.random — same candidate+JD -> identical questions
+      - Five categories: Technical Depth, JD Requirements, Experience Probe,
+        Skill Gap, Culture & Seniority
+      - Technical Depth probes require JD required skills the candidate claims,
+        anchored to a specific experience entry when the skill appears there
+      - JD Requirements summary card lists required and nice-to-have skills
+        explicitly and asks the candidate to map coverage vs. learning
+      - Experience Probe references the two most recent resume roles by name,
+        company, period, and even quotes back the candidate's own description
+      - Skill Gap prefers JD-required missing skills, falls back to
+        aiEvaluation.skillGaps from the D-2 evaluator. Harder framing for
+        definitely-absent required skills, softer framing for AI-flagged gaps.
+      - Culture & Seniority questions are bucketed by parseSeniority() into
+        junior / mid / senior / lead / principal bands pulled from JD.seniority
+      - Template selection uses a deterministic hash of candidate.id+name as
+        seed, not Math.random, so the sprint stays reproducible.
+      - Designed for LLM replacement: swap generateInterviewQuestions()
+        internals with an AI SDK call returning the same InterviewQuestion[]
+        shape. Same pattern as D-2 scoring-engine.ts.
+    - New component: src/components/interview-prep.tsx
+      - Industrial Clarity styling — square category bullets, table-header
+        section labels, monospace numeric indices, accent-primary skill chips
+      - Each question card shows: numeric index, question text, skill chips,
+        rationale ("Why"), related dimension tag
+      - No-JD fallback notice, empty-state fallback, deterministic group order
+    - Modified: src/components/candidate-profile.tsx
+      - Added jd?: JobDescription prop
+      - Added tab switcher (role=tablist, Overview default active)
+      - Wrapped existing sections with activeTab === "overview" guard so they
+        render exactly as before on the default tab. All existing data-testids
+        (ai-evaluation-section, experience-section, education-section,
+        certifications-section, action-buttons-bar, candidate-header,
+        pipeline-status-badge, candidate-score, score-bar, candidate-profile,
+        timeline entries, dimension bars, etc.) unchanged on Overview.
+      - Added TabButton helper with accent-primary active underline
+    - Modified: src/app/job/[id]/candidate/[cid]/page.tsx
+      - Resolves job.jd and passes it down to CandidateProfile
+    - Evaluator test: tests/evaluator-d3.spec.ts — 10 tests, all pass
+      1. overview tab default + existing D-1/D-2/D-4 content still renders
+      2. clicking Interview Prep tab reveals questions
+      3. multiple category groups rendered
+      4. questions reference real candidate experience (Stripe/Cloudflare)
+      5. questions map to JD required skills (Go, K8s, Postgres, gRPC, etc.)
+      6. skill-gap questions populate for low-skill-count candidate (c1-08)
+      7. every question has a "Why" rationale element
+      8. different candidates produce different question sets (non-trivial)
+      9. switching back to Overview restores all existing sections
+      10. design audit screenshot at 1440 viewport
+    - No regressions on scoped tests: evaluator-d1 (20 pass), evaluator-d1-eval
+      (10 pass), eval-d2 (1 pass), evaluator-c1-r2, evaluator-c2-r2, evaluator-c3,
+      evaluator-c4, evaluator-c5, evaluator-b4, evaluator-b5, evaluator-nav1,
+      eval-a6, eval-arch1 — 72/72 pass in the full regression sweep
+    - Pre-existing baseline failures unchanged (NOT caused by D-3):
+      * tests/eval-d1.spec.ts, tests/eval-d4.spec.ts — use unscoped
+        `page.locator('[data-testid=...]')` that clashes with the ARCH-1
+        right-sidebar profile-panel's duplicate testids (strict-mode violation)
+      * tests/eval-a2.spec.ts, eval-b1.spec.ts, eval-b2.spec.ts — target
+        pre-ARCH-1 dashboard layout
+      * Verified by git-checkout'ing the two modified files and re-running
+        on clean master: same failures, so D-3 is neutral on these tests.
+    - npm run build passes cleanly
   - C-5: Sub-score sorting and skill filtering — EVALUATOR PASSED
     - Scores: Design 82 / Originality 76 / Craft 83 / Functionality 90
     - 10 Playwright tests pass (default sort, 3x sub-score sort, skill filter,
@@ -617,7 +685,7 @@ PHASE 7: P1 FEATURES (renumbered from Phase 6)
   [ ] C-3  Bulk actions on candidates
   [ ] C-4  Inline candidate preview expansion
   [ ] C-5  Sub-score sorting and skill filtering
-  [ ] D-3  AI-generated interview questions
+  [~] D-3  AI-generated interview questions  [AWAITING EVALUATOR REVIEW]
   [ ] D-5  Internal notes on candidate
   [ ] NAV-1 Quick-command suggestions in chat
 

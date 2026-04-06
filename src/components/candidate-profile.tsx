@@ -3,17 +3,23 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Candidate, Experience, Education, AIEvaluation, DimensionScore, PipelineStatus } from "@/data/mock-candidates";
+import type { JobDescription } from "@/data/mock-jobs";
+import { InterviewPrep } from "@/components/interview-prep";
 
 /**
- * CandidateProfile — Candidate detail page content (D-1, D-2, D-4).
+ * CandidateProfile — Candidate detail page content (D-1, D-2, D-3, D-4).
  *
  * Displays:
  * - Header: candidate name, match score (large + color-coded bar), pipeline status
  * - Action bar: pipeline stage transition buttons (D-4)
- * - AI Evaluation Report (D-2)
- * - Structured timeline: work experience in reverse chronological order
- * - Education section
- * - Certifications section (if present)
+ * - Tab switcher: Overview / Interview Prep
+ * - Overview tab:
+ *   - AI Evaluation Report (D-2)
+ *   - Structured timeline: work experience in reverse chronological order
+ *   - Education section
+ *   - Certifications section (if present)
+ * - Interview Prep tab (D-3):
+ *   - AI-generated tailored interview questions grouped by category
  *
  * Design: "Industrial Clarity" — dark theme, timeline with square nodes,
  * JetBrains Mono for time periods, table-header section labels.
@@ -23,7 +29,10 @@ interface CandidateProfileProps {
   candidate: Candidate;
   jobId: string;
   jobTitle: string;
+  jd?: JobDescription;
 }
+
+type ProfileTab = "overview" | "interview-prep";
 
 /** Returns the CSS color for a score based on range. */
 function getScoreColor(score: number): string {
@@ -106,11 +115,12 @@ function getActionButtonClasses(variant: ActionButtonConfig["variant"], isDisabl
   }
 }
 
-export function CandidateProfile({ candidate, jobId, jobTitle }: CandidateProfileProps) {
+export function CandidateProfile({ candidate, jobId, jobTitle, jd }: CandidateProfileProps) {
   const scoreColor = getScoreColor(candidate.matchScore);
   const scoreTextClass = getScoreTextClass(candidate.matchScore);
   const initialStatus: PipelineStatus = candidate.pipelineStatus || "New";
   const [currentStatus, setCurrentStatus] = useState<PipelineStatus>(initialStatus);
+  const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
 
   /** Determines if an action button should be disabled based on current status. */
   function isButtonDisabled(targetStatus: PipelineStatus): boolean {
@@ -230,16 +240,48 @@ export function CandidateProfile({ candidate, jobId, jobTitle }: CandidateProfil
             </div>
           </section>
 
-          {/* ── AI Evaluation Report ────────────────────────────── */}
-          {candidate.aiEvaluation && (
-            <AIEvaluationReport
-              evaluation={candidate.aiEvaluation}
-              overallScore={candidate.matchScore}
+          {/* ── Tab Switcher (D-3) ───────────────────────────────── */}
+          <div
+            className="mb-6 flex items-center gap-0 border-b border-border-default"
+            role="tablist"
+            data-testid="profile-tabs"
+          >
+            <TabButton
+              label="Overview"
+              isActive={activeTab === "overview"}
+              onClick={() => setActiveTab("overview")}
+              testId="tab-overview"
+            />
+            <TabButton
+              label="Interview Prep"
+              isActive={activeTab === "interview-prep"}
+              onClick={() => setActiveTab("interview-prep")}
+              testId="tab-interview-prep"
+            />
+          </div>
+
+          {activeTab === "overview" && (
+            <>
+              {/* ── AI Evaluation Report ────────────────────────────── */}
+              {candidate.aiEvaluation && (
+                <AIEvaluationReport
+                  evaluation={candidate.aiEvaluation}
+                  overallScore={candidate.matchScore}
+                />
+              )}
+            </>
+          )}
+
+          {activeTab === "interview-prep" && (
+            <InterviewPrep
+              candidate={candidate}
+              jd={jd}
+              jobTitle={jobTitle}
             />
           )}
 
           {/* ── Resume: Work Experience Timeline ────────────────── */}
-          {candidate.experience && candidate.experience.length > 0 && (
+          {activeTab === "overview" && candidate.experience && candidate.experience.length > 0 && (
             <section className="mb-8" data-testid="experience-section">
               <h2 className="table-header mb-4 pb-2 border-b border-border-default">
                 Work Experience
@@ -264,7 +306,7 @@ export function CandidateProfile({ candidate, jobId, jobTitle }: CandidateProfil
           )}
 
           {/* ── Education ──────────────────────────────────────────── */}
-          {candidate.education && candidate.education.length > 0 && (
+          {activeTab === "overview" && candidate.education && candidate.education.length > 0 && (
             <section className="mb-8" data-testid="education-section">
               <h2 className="table-header mb-4 pb-2 border-b border-border-default">
                 Education
@@ -289,7 +331,7 @@ export function CandidateProfile({ candidate, jobId, jobTitle }: CandidateProfil
           )}
 
           {/* ── Certifications ─────────────────────────────────────── */}
-          {candidate.certifications && candidate.certifications.length > 0 && (
+          {activeTab === "overview" && candidate.certifications && candidate.certifications.length > 0 && (
             <section className="mb-8" data-testid="certifications-section">
               <h2 className="table-header mb-4 pb-2 border-b border-border-default">
                 Certifications
@@ -314,7 +356,7 @@ export function CandidateProfile({ candidate, jobId, jobTitle }: CandidateProfil
           )}
 
           {/* Fallback when no resume data */}
-          {!candidate.experience && !candidate.education && (
+          {activeTab === "overview" && !candidate.experience && !candidate.education && (
             <div className="flex items-center justify-center py-16" data-testid="no-resume-fallback">
               <p className="text-text-muted text-sm font-mono">
                 No structured resume data available for this candidate.
@@ -324,6 +366,46 @@ export function CandidateProfile({ candidate, jobId, jobTitle }: CandidateProfil
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Tab Button (D-3 tab switcher) ─────────────────────────────────────────
+
+function TabButton({
+  label,
+  isActive,
+  onClick,
+  testId,
+}: {
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+  testId: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={isActive}
+      onClick={onClick}
+      data-testid={testId}
+      data-state={isActive ? "active" : "inactive"}
+      className={`relative px-4 py-2.5 text-[11px] font-mono font-medium uppercase tracking-wider transition-colors duration-150 ${
+        isActive
+          ? "text-accent-primary"
+          : "text-text-muted hover:text-text-secondary"
+      }`}
+      style={{ letterSpacing: "0.08em" }}
+    >
+      {label}
+      {/* Active underline indicator — 2px accent bar that replaces border */}
+      {isActive && (
+        <span
+          className="absolute left-0 right-0 bottom-[-1px] h-[2px] bg-accent-primary"
+          aria-hidden="true"
+        />
+      )}
+    </button>
   );
 }
 
