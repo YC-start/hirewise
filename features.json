@@ -348,7 +348,7 @@
         "Verify only candidates with that skill tag are shown.",
         "Clear the filter — verify the full list is restored."
       ],
-      "passes": false,
+      "passes": true,
       "depends_on": [
         "C-2"
       ]

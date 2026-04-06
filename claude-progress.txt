@@ -7,10 +7,20 @@ Last updated: 2026-04-06
 Phase: Phase 8 — ALL P0 COMPLETE. Continuing P1 development.
 ALL P0 PASSED (17/17): A-1, A-2, A-3, A-5, B-1, B-2, C-1, C-2, D-1, D-2, D-4,
   LAYOUT-1, LAYOUT-2, ARCH-1, FLOW-1, FLOW-2, FLOW-3
-P1 passed: A-4, A-6, B-4, B-5, NAV-1, C-3, C-4
-P1 in progress: C-5 (implemented, awaiting evaluator)
+P1 passed: A-4, A-6, B-4, B-5, NAV-1, C-3, C-4, C-5
 P1 not started: D-3, D-5
 Today's session (2026-04-06):
+  - C-5: Sub-score sorting and skill filtering — EVALUATOR PASSED
+    - Scores: Design 82 / Originality 76 / Craft 83 / Functionality 90
+    - 10 Playwright tests pass (default sort, 3x sub-score sort, skill filter,
+      clear filter, reset sort, empty state, combined filter+sort, design audit)
+    - No regressions: 73/73 existing tests (C-1, C-1-r2, C-2, C-2-r2, C-3, C-4,
+      B-4, B-5, NAV-1) all pass
+    - Evaluator notes for future polish (non-blocking):
+      * Remove shadow-lg from sort/skill dropdown menus (PRODUCT_SPEC §4 "no shadows")
+      * Wire Esc key + ArrowUp/Down keyboard nav inside open dropdowns
+      * Consider mini sparkline glyph per dimension to push Originality higher
+      * Consider URL-syncing sortBy + skillFilter for shareable pipeline views
   - C-5: Sub-score sorting and skill filtering — IMPLEMENTED (awaiting evaluator)
     - Sort dropdown in filter bar: Overall Score (default), Technical Fit, Culture Fit, Experience Depth
     - Selecting a sub-score dimension re-sorts candidates descending by that dimension
