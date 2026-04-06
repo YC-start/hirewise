@@ -1,21 +1,22 @@
 "use client";
 
-import { useRef, useCallback } from "react";
-import Link from "next/link";
+import { useState, useRef, useCallback } from "react";
 import { getCandidatesForJob } from "@/data/mock-candidates";
 import { useCandidateStore } from "@/stores/candidate-store";
 import { useSelectionStore } from "@/stores/selection-store";
 import { BulkActionToolbar } from "@/components/bulk-action-toolbar";
+import { CandidateInlinePreview } from "@/components/candidate-inline-preview";
 import type { Candidate, PipelineStatus } from "@/data/mock-candidates";
 
 const EMPTY_CANDIDATES: Candidate[] = [];
 
 /**
- * CandidateRankedList — Main panel component for the pipeline page (C-2 + C-3).
+ * CandidateRankedList — Main panel component for the pipeline page (C-2 + C-3 + C-4).
  *
  * Displays candidates sorted by AI match score descending.
  * Each row shows: checkbox, name, match score (large numeric + horizontal bar), top 3 skill tags.
  * Supports multi-select via checkboxes and shift-click for bulk actions (C-3).
+ * Clicking a row (not the checkbox) expands an inline preview panel below (C-4).
  *
  * Design:
  * - Table-style layout with 40-44px row height
@@ -25,6 +26,7 @@ const EMPTY_CANDIDATES: Candidate[] = [];
  * - Score number: Space Grotesk 700 via JetBrains Mono for monospace alignment
  * - Checkbox column for multi-select with select-all in header
  * - Bulk action toolbar appears at bottom when candidates are selected
+ * - Inline preview panel expands below row on click (C-4)
  */
 
 interface CandidateRankedListProps {
@@ -75,6 +77,9 @@ export function CandidateRankedList({ jobId }: CandidateRankedListProps) {
   const deselectAll = useSelectionStore((s) => s.deselectAll);
   const rangeSelect = useSelectionStore((s) => s.rangeSelect);
 
+  // Inline preview expansion state (C-4)
+  const [expandedCandidateId, setExpandedCandidateId] = useState<string | null>(null);
+
   // Track last clicked candidate for shift-click range selection
   const lastClickedRef = useRef<string | null>(null);
 
@@ -120,6 +125,14 @@ export function CandidateRankedList({ jobId }: CandidateRankedListProps) {
       lastClickedRef.current = candidateId;
     },
     [jobId, candidateIds, rangeSelect, toggle]
+  );
+
+  // Toggle inline preview expansion (C-4)
+  const handleRowExpand = useCallback(
+    (candidateId: string) => {
+      setExpandedCandidateId((prev) => (prev === candidateId ? null : candidateId));
+    },
+    []
   );
 
   // Bulk status change handler — updates pipelineStatus via the candidate store
@@ -175,15 +188,21 @@ export function CandidateRankedList({ jobId }: CandidateRankedListProps) {
       {/* Candidate rows */}
       <div className="flex-1 overflow-y-auto" data-testid="candidate-list-body">
         {candidates.map((candidate, index) => (
-          <CandidateRow
-            key={candidate.id}
-            candidate={candidate}
-            rank={index + 1}
-            jobId={jobId}
-            isOdd={index % 2 === 1}
-            isSelected={effectiveSelection.has(candidate.id)}
-            onSelect={handleRowSelect}
-          />
+          <div key={candidate.id}>
+            <CandidateRow
+              candidate={candidate}
+              rank={index + 1}
+              jobId={jobId}
+              isOdd={index % 2 === 1}
+              isSelected={effectiveSelection.has(candidate.id)}
+              isExpanded={expandedCandidateId === candidate.id}
+              onSelect={handleRowSelect}
+              onExpand={handleRowExpand}
+            />
+            {expandedCandidateId === candidate.id && (
+              <CandidateInlinePreview candidate={candidate} jobId={jobId} />
+            )}
+          </div>
         ))}
       </div>
 
@@ -205,7 +224,9 @@ interface CandidateRowProps {
   jobId: string;
   isOdd: boolean;
   isSelected: boolean;
+  isExpanded: boolean;
   onSelect: (candidateId: string, shiftKey: boolean) => void;
+  onExpand: (candidateId: string) => void;
 }
 
 function CandidateRow({
@@ -214,7 +235,9 @@ function CandidateRow({
   jobId,
   isOdd,
   isSelected,
+  isExpanded,
   onSelect,
+  onExpand,
 }: CandidateRowProps) {
   const topSkills = candidate.skills.slice(0, 3);
   const scoreColor = getScoreColor(candidate.matchScore);
@@ -226,16 +249,35 @@ function CandidateRow({
     onSelect(candidate.id, e.shiftKey);
   };
 
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Don't expand if user is clicking a link or button inside the row
+    const target = e.target as HTMLElement;
+    if (target.closest("a") || target.closest("button")) return;
+    onExpand(candidate.id);
+  };
+
   return (
     <div
-      className={`flex items-center h-[42px] border-b border-border-default transition-colors ${
-        isSelected
+      className={`flex items-center h-[42px] border-b border-border-default transition-colors cursor-pointer ${
+        isExpanded
+          ? "bg-surface-tertiary/60 border-b-0"
+          : isSelected
           ? "bg-accent-primary/8 border-l-2 border-l-accent-primary"
           : isOdd
-          ? "bg-surface-tertiary/30"
-          : "bg-transparent"
+          ? "bg-surface-tertiary/30 hover:bg-surface-tertiary/50"
+          : "bg-transparent hover:bg-surface-tertiary/30"
       }`}
       data-testid={`candidate-row-${candidate.id}`}
+      onClick={handleRowClick}
+      role="button"
+      tabIndex={0}
+      aria-expanded={isExpanded}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onExpand(candidate.id);
+        }
+      }}
     >
       {/* Checkbox */}
       <div className="w-8 flex items-center justify-center px-4">
@@ -268,18 +310,22 @@ function CandidateRow({
         </button>
       </div>
 
-      {/* Clickable row content — navigates to candidate detail */}
-      <Link
-        href={`/job/${jobId}/candidate/${candidate.id}`}
-        className="flex items-center flex-1 h-full cursor-pointer hover:bg-surface-tertiary/50 transition-colors"
-      >
+      {/* Row content — click expands inline preview (C-4) */}
+      <div className="flex items-center flex-1 h-full">
         {/* Rank */}
         <div className="w-8 text-center font-mono text-xs text-text-muted">
           {rank}
         </div>
 
-        {/* Name + pipeline status */}
+        {/* Name + pipeline status + expand indicator */}
         <div className="flex-1 min-w-[140px] pl-3 flex items-center gap-2 overflow-hidden">
+          <span
+            className={`inline-flex items-center justify-center w-4 h-4 text-[10px] text-text-muted transition-transform ${
+              isExpanded ? "rotate-90" : ""
+            }`}
+          >
+            &#9656;
+          </span>
           <span className="text-sm text-text-primary font-medium truncate">
             {candidate.name}
           </span>
@@ -332,7 +378,7 @@ function CandidateRow({
           <SubScoreChip label="CUL" value={candidate.subScores.cultureFit} />
           <SubScoreChip label="EXP" value={candidate.subScores.experienceDepth} />
         </div>
-      </Link>
+      </div>
     </div>
   );
 }

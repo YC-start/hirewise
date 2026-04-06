@@ -8,9 +8,20 @@ Phase: Phase 8 — ALL P0 COMPLETE. Continuing P1 development.
 ALL P0 PASSED (17/17): A-1, A-2, A-3, A-5, B-1, B-2, C-1, C-2, D-1, D-2, D-4,
   LAYOUT-1, LAYOUT-2, ARCH-1, FLOW-1, FLOW-2, FLOW-3
 P1 passed: A-4, A-6, B-4, B-5, NAV-1, C-3
-P1 in progress: (none)
-P1 not started: C-4, C-5, D-3, D-5
+P1 in progress: C-4 (implemented, awaiting evaluator)
+P1 not started: C-5, D-3, D-5
 Today's session (2026-04-06):
+  - C-4: Inline candidate preview expansion — IMPLEMENTED (awaiting evaluator)
+    - Clicking candidate row (not checkbox) toggles inline preview panel below
+    - Preview shows: score breakdown with dimension bars, all skills,
+      AI evaluation summary, strengths, skill gaps, latest experience, education
+    - "View Full Profile" button navigates to /job/:id/candidate/:cid
+    - Row shows expand/collapse triangle indicator, highlight on expanded state
+    - Preview panel: surface-secondary bg, accent-secondary left border (4px),
+      dimension mini-bars, monospace scoring, flat industrial style
+    - New file: candidate-inline-preview.tsx
+    - Modified: candidate-ranked-list.tsx (row click → expand instead of navigate)
+    - No regressions: C-1 (11/11), C-2 (16/16), C-3 (9/9), B-4 (3/3), NAV-1 (7/7) all pass
   - C-3: Bulk actions on candidates — EVALUATOR PASSED
     - Scores: Design 78 / Originality 76 / Craft 80 / Functionality 86
     - 9 Playwright tests pass (pipeline load, multi-select, shift-click range,
