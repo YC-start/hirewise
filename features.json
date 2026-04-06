@@ -389,7 +389,7 @@
         "Verify the note persists on page reload.",
         "Verify the note is visible when another team member views the same candidate."
       ],
-      "passes": false,
+      "passes": true,
       "depends_on": [
         "D-1"
       ]
