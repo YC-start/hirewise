@@ -1,17 +1,21 @@
 "use client";
 
+import { useRef, useCallback } from "react";
 import Link from "next/link";
 import { getCandidatesForJob } from "@/data/mock-candidates";
 import { useCandidateStore } from "@/stores/candidate-store";
-import type { Candidate } from "@/data/mock-candidates";
+import { useSelectionStore } from "@/stores/selection-store";
+import { BulkActionToolbar } from "@/components/bulk-action-toolbar";
+import type { Candidate, PipelineStatus } from "@/data/mock-candidates";
 
 const EMPTY_CANDIDATES: Candidate[] = [];
 
 /**
- * CandidateRankedList — Main panel component for the pipeline page (C-2).
+ * CandidateRankedList — Main panel component for the pipeline page (C-2 + C-3).
  *
  * Displays candidates sorted by AI match score descending.
- * Each row shows: name, match score (large numeric + horizontal bar), top 3 skill tags.
+ * Each row shows: checkbox, name, match score (large numeric + horizontal bar), top 3 skill tags.
+ * Supports multi-select via checkboxes and shift-click for bulk actions (C-3).
  *
  * Design:
  * - Table-style layout with 40-44px row height
@@ -19,7 +23,8 @@ const EMPTY_CANDIDATES: Candidate[] = [];
  * - Column headers: uppercase 11px #555555 letter-spacing 0.08em
  * - Score bar: flat/square ends (no rounded), color-coded by score range
  * - Score number: Space Grotesk 700 via JetBrains Mono for monospace alignment
- * - Click row to navigate to /job/[id]/candidate/[cid]
+ * - Checkbox column for multi-select with select-all in header
+ * - Bulk action toolbar appears at bottom when candidates are selected
  */
 
 interface CandidateRankedListProps {
@@ -40,14 +45,91 @@ function getScoreTextClass(score: number): string {
   return "text-score-low";
 }
 
+/** Returns CSS classes for a pipeline status badge. */
+function getStatusBadgeClass(status: string): string {
+  switch (status) {
+    case "Interview":
+      return "bg-accent-primary text-surface-primary";
+    case "Offer":
+      return "bg-accent-secondary text-surface-primary";
+    case "Hired":
+      return "bg-accent-secondary text-surface-primary";
+    case "Screening":
+      return "bg-signal-warning text-surface-primary";
+    case "Rejected":
+      return "bg-signal-danger text-surface-primary";
+    case "Archived":
+      return "bg-text-muted text-surface-primary";
+    default:
+      return "bg-text-secondary text-surface-primary";
+  }
+}
+
 export function CandidateRankedList({ jobId }: CandidateRankedListProps) {
   const apiCandidates = useCandidateStore((s) => s.candidatesByJob[jobId] ?? EMPTY_CANDIDATES);
   const hasCandidatesBeenSet = useCandidateStore((s) => s.jobsWithCandidates[jobId] ?? false);
+  const selectedIds = useSelectionStore((s) => s.selectedIds);
+  const activeJobId = useSelectionStore((s) => s.activeJobId);
+  const toggle = useSelectionStore((s) => s.toggle);
+  const selectAll = useSelectionStore((s) => s.selectAll);
+  const deselectAll = useSelectionStore((s) => s.deselectAll);
+  const rangeSelect = useSelectionStore((s) => s.rangeSelect);
+
+  // Track last clicked candidate for shift-click range selection
+  const lastClickedRef = useRef<string | null>(null);
+
+  // Pipeline status overrides (from bulk actions)
+  const statusOverrides = useCandidateStore((s) => s.statusOverrides);
+
   // Use API/refinement candidates if they've been explicitly set (even if empty after filtering),
-  // otherwise fall back to mock data for mock jobs that haven't been searched
-  const candidates = hasCandidatesBeenSet
+  // otherwise fall back to mock data for mock jobs that haven't been searched.
+  // Apply any status overrides from bulk actions (C-3).
+  const rawCandidates = hasCandidatesBeenSet
     ? [...apiCandidates].sort((a, b) => b.matchScore - a.matchScore)
     : getCandidatesForJob(jobId);
+
+  const candidates = rawCandidates.map((c) => {
+    const override = statusOverrides[`${jobId}:${c.id}`];
+    return override ? { ...c, pipelineStatus: override } : c;
+  });
+
+  const candidateIds = candidates.map((c) => c.id);
+
+  // Effective selection: only count selections for this job
+  const effectiveSelection = activeJobId === jobId ? selectedIds : new Set<string>();
+  const allSelected =
+    candidates.length > 0 &&
+    candidates.every((c) => effectiveSelection.has(c.id));
+  const someSelected = candidates.some((c) => effectiveSelection.has(c.id));
+
+  const handleSelectAll = useCallback(() => {
+    if (allSelected) {
+      deselectAll();
+    } else {
+      selectAll(jobId, candidateIds);
+    }
+  }, [allSelected, deselectAll, selectAll, jobId, candidateIds]);
+
+  const handleRowSelect = useCallback(
+    (candidateId: string, shiftKey: boolean) => {
+      if (shiftKey && lastClickedRef.current) {
+        rangeSelect(jobId, candidateIds, lastClickedRef.current, candidateId);
+      } else {
+        toggle(jobId, candidateId);
+      }
+      lastClickedRef.current = candidateId;
+    },
+    [jobId, candidateIds, rangeSelect, toggle]
+  );
+
+  // Bulk status change handler — updates pipelineStatus via the candidate store
+  const bulkUpdateStatus = useCandidateStore((s) => s.bulkUpdateStatus);
+  const handleBulkStatusChange = useCallback(
+    (ids: string[], newStatus: PipelineStatus) => {
+      bulkUpdateStatus(jobId, ids, newStatus);
+    },
+    [jobId, bulkUpdateStatus]
+  );
 
   if (candidates.length === 0) {
     return (
@@ -68,6 +150,21 @@ export function CandidateRankedList({ jobId }: CandidateRankedListProps) {
         className="flex items-center h-9 px-4 border-b border-border-default bg-surface-primary flex-shrink-0"
         data-testid="candidate-list-header"
       >
+        {/* Select all checkbox */}
+        <div className="w-8 flex items-center justify-center">
+          <button
+            onClick={handleSelectAll}
+            className="group flex items-center justify-center w-[16px] h-[16px] border border-border-default bg-surface-secondary hover:border-accent-primary transition-colors"
+            aria-label={allSelected ? "Deselect all candidates" : "Select all candidates"}
+            data-testid="select-all-checkbox"
+          >
+            {allSelected ? (
+              <div className="w-[10px] h-[10px] bg-accent-primary" />
+            ) : someSelected ? (
+              <div className="w-[10px] h-[2px] bg-accent-primary" />
+            ) : null}
+          </button>
+        </div>
         <div className="w-8 table-header text-center">#</div>
         <div className="flex-1 min-w-[140px] table-header pl-3">Candidate</div>
         <div className="w-[200px] table-header pl-3">AI Score</div>
@@ -84,9 +181,18 @@ export function CandidateRankedList({ jobId }: CandidateRankedListProps) {
             rank={index + 1}
             jobId={jobId}
             isOdd={index % 2 === 1}
+            isSelected={effectiveSelection.has(candidate.id)}
+            onSelect={handleRowSelect}
           />
         ))}
       </div>
+
+      {/* Bulk action toolbar (C-3) */}
+      <BulkActionToolbar
+        jobId={jobId}
+        candidates={candidates}
+        onStatusChange={handleBulkStatusChange}
+      />
     </div>
   );
 }
@@ -98,73 +204,136 @@ interface CandidateRowProps {
   rank: number;
   jobId: string;
   isOdd: boolean;
+  isSelected: boolean;
+  onSelect: (candidateId: string, shiftKey: boolean) => void;
 }
 
-function CandidateRow({ candidate, rank, jobId, isOdd }: CandidateRowProps) {
+function CandidateRow({
+  candidate,
+  rank,
+  jobId,
+  isOdd,
+  isSelected,
+  onSelect,
+}: CandidateRowProps) {
   const topSkills = candidate.skills.slice(0, 3);
   const scoreColor = getScoreColor(candidate.matchScore);
   const scoreTextClass = getScoreTextClass(candidate.matchScore);
 
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onSelect(candidate.id, e.shiftKey);
+  };
+
   return (
-    <Link
-      href={`/job/${jobId}/candidate/${candidate.id}`}
-      className={`flex items-center h-[42px] px-4 border-b border-border-default cursor-pointer transition-colors hover:bg-surface-tertiary ${
-        isOdd ? "bg-surface-tertiary/30" : "bg-transparent"
+    <div
+      className={`flex items-center h-[42px] border-b border-border-default transition-colors ${
+        isSelected
+          ? "bg-accent-primary/8 border-l-2 border-l-accent-primary"
+          : isOdd
+          ? "bg-surface-tertiary/30"
+          : "bg-transparent"
       }`}
       data-testid={`candidate-row-${candidate.id}`}
     >
-      {/* Rank */}
-      <div className="w-8 text-center font-mono text-xs text-text-muted">
-        {rank}
-      </div>
-
-      {/* Name */}
-      <div className="flex-1 min-w-[140px] pl-3">
-        <span className="text-sm text-text-primary font-medium truncate block">
-          {candidate.name}
-        </span>
-      </div>
-
-      {/* AI Score: number + bar */}
-      <div className="w-[200px] pl-3 flex items-center gap-3">
-        <span
-          className={`font-heading font-bold font-700 text-lg leading-none min-w-[36px] ${scoreTextClass}`}
-          style={{ fontVariantNumeric: "tabular-nums" }}
+      {/* Checkbox */}
+      <div className="w-8 flex items-center justify-center px-4">
+        <button
+          onClick={handleCheckboxClick}
+          className={`flex items-center justify-center w-[16px] h-[16px] border transition-colors flex-shrink-0 ${
+            isSelected
+              ? "border-accent-primary bg-accent-primary"
+              : "border-border-default bg-surface-secondary hover:border-accent-primary"
+          }`}
+          aria-label={`Select ${candidate.name}`}
+          data-testid={`select-checkbox-${candidate.id}`}
         >
-          {candidate.matchScore}
-        </span>
-        <div className="flex-1 h-[6px] bg-surface-tertiary">
-          <div
-            className="h-full"
-            style={{
-              width: `${candidate.matchScore}%`,
-              backgroundColor: scoreColor,
-            }}
-            data-testid={`score-bar-${candidate.id}`}
-          />
+          {isSelected && (
+            <svg
+              width="10"
+              height="8"
+              viewBox="0 0 10 8"
+              fill="none"
+              className="text-surface-primary"
+            >
+              <path
+                d="M1 4L3.5 6.5L9 1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="square"
+              />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {/* Clickable row content — navigates to candidate detail */}
+      <Link
+        href={`/job/${jobId}/candidate/${candidate.id}`}
+        className="flex items-center flex-1 h-full cursor-pointer hover:bg-surface-tertiary/50 transition-colors"
+      >
+        {/* Rank */}
+        <div className="w-8 text-center font-mono text-xs text-text-muted">
+          {rank}
         </div>
-      </div>
 
-      {/* Skill tags (top 3) */}
-      <div className="flex-1 min-w-[200px] pl-3 flex items-center gap-1.5 overflow-hidden">
-        {topSkills.map((skill) => (
-          <span
-            key={skill}
-            className="inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-medium leading-tight text-accent-primary border border-accent-primary/40 bg-accent-primary/8 whitespace-nowrap flex-shrink-0"
-            data-testid={`skill-chip-${skill.toLowerCase().replace(/[\s/()]+/g, "-")}`}
-          >
-            {skill}
+        {/* Name + pipeline status */}
+        <div className="flex-1 min-w-[140px] pl-3 flex items-center gap-2 overflow-hidden">
+          <span className="text-sm text-text-primary font-medium truncate">
+            {candidate.name}
           </span>
-        ))}
-      </div>
+          {candidate.pipelineStatus && candidate.pipelineStatus !== "New" && (
+            <span
+              className={`inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono font-medium uppercase tracking-wider flex-shrink-0 ${getStatusBadgeClass(candidate.pipelineStatus)}`}
+              data-testid={`status-badge-${candidate.id}`}
+            >
+              {candidate.pipelineStatus}
+            </span>
+          )}
+        </div>
 
-      {/* Sub-scores (visible on xl+) */}
-      <div className="w-[180px] pl-3 hidden xl:flex items-center gap-2">
-        <SubScoreChip label="TEC" value={candidate.subScores.technicalFit} />
-        <SubScoreChip label="CUL" value={candidate.subScores.cultureFit} />
-        <SubScoreChip label="EXP" value={candidate.subScores.experienceDepth} />
-      </div>
-    </Link>
+        {/* AI Score: number + bar */}
+        <div className="w-[200px] pl-3 flex items-center gap-3">
+          <span
+            className={`font-heading font-bold font-700 text-lg leading-none min-w-[36px] ${scoreTextClass}`}
+            style={{ fontVariantNumeric: "tabular-nums" }}
+          >
+            {candidate.matchScore}
+          </span>
+          <div className="flex-1 h-[6px] bg-surface-tertiary">
+            <div
+              className="h-full"
+              style={{
+                width: `${candidate.matchScore}%`,
+                backgroundColor: scoreColor,
+              }}
+              data-testid={`score-bar-${candidate.id}`}
+            />
+          </div>
+        </div>
+
+        {/* Skill tags (top 3) */}
+        <div className="flex-1 min-w-[200px] pl-3 flex items-center gap-1.5 overflow-hidden">
+          {topSkills.map((skill) => (
+            <span
+              key={skill}
+              className="inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-medium leading-tight text-accent-primary border border-accent-primary/40 bg-accent-primary/8 whitespace-nowrap flex-shrink-0"
+              data-testid={`skill-chip-${skill.toLowerCase().replace(/[\s/()]+/g, "-")}`}
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
+
+        {/* Sub-scores (visible on xl+) */}
+        <div className="w-[180px] pl-3 hidden xl:flex items-center gap-2">
+          <SubScoreChip label="TEC" value={candidate.subScores.technicalFit} />
+          <SubScoreChip label="CUL" value={candidate.subScores.cultureFit} />
+          <SubScoreChip label="EXP" value={candidate.subScores.experienceDepth} />
+        </div>
+      </Link>
+    </div>
   );
 }
 

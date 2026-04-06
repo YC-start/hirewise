@@ -8,9 +8,24 @@ Phase: Phase 8 — ALL P0 COMPLETE. Continuing P1 development.
 ALL P0 PASSED (17/17): A-1, A-2, A-3, A-5, B-1, B-2, C-1, C-2, D-1, D-2, D-4,
   LAYOUT-1, LAYOUT-2, ARCH-1, FLOW-1, FLOW-2, FLOW-3
 P1 passed: A-4, A-6, B-4, B-5, NAV-1
-P1 in progress: (none)
-P1 not started: C-3, C-4, C-5, D-3, D-5
+P1 in progress: C-3 (implemented, awaiting evaluator)
+P1 not started: C-4, C-5, D-3, D-5
 Today's session (2026-04-06):
+  - C-3: Bulk actions on candidates — IMPLEMENTED (awaiting evaluator)
+    - Multi-select via checkboxes on each candidate row
+    - Select-all checkbox in header (with indeterminate state for partial selection)
+    - Shift-click for range selection
+    - Bulk action toolbar appears at bottom when candidates selected
+    - "Advance to Interview" button (pill, accent-primary) — updates pipelineStatus
+    - "Reject" button (pill, signal-danger) — updates pipelineStatus
+    - "Export to CSV" button (ghost, border) — downloads CSV file with candidate data
+    - Pipeline status badges appear inline on each row after status changes
+    - Selection count badge + clear selection button
+    - Feedback toast on action completion (auto-dismiss)
+    - Status overrides stored in Zustand candidate-store (persist across re-renders)
+    - New files: selection-store.ts, bulk-action-toolbar.tsx
+    - Modified: candidate-ranked-list.tsx, candidate-store.ts
+    - No regressions: ARCH-1 (8/8), B-4 (3/3), B-5 (6/6), NAV-1 (7/7) all pass
   - NAV-1: Quick-command suggestions in chat — EVALUATOR PASSED
     - Scores: Design 80 / Originality 76 / Craft 82 / Functionality 86
     - 7 Playwright tests pass (empty state, pre-fill, contextual per route,
@@ -35,7 +50,7 @@ Today's session (2026-04-06):
     - No regressions on B-4 tests
     - Filter bar: dark theme consistent, chartreuse active states, monospace chips
     - Department dropdown + My Jobs toggle + clear all + removable chips all functional
-Next: NAV-1 (evaluator), C-3, C-4, C-5, D-3, D-5
+Next: C-3 (evaluator), C-4, C-5, D-3, D-5
 
 ==============================================================================
 PHASE 0: PLANNING & SPECIFICATION

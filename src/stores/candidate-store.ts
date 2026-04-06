@@ -1,11 +1,14 @@
 import { create } from "zustand";
-import type { Candidate } from "@/data/mock-candidates";
+import type { Candidate, PipelineStatus } from "@/data/mock-candidates";
 
 /**
  * CandidateStore — Holds candidates from Apollo API searches.
  *
  * For mock/existing jobs, the pipeline panel still reads from MOCK_CANDIDATES.
  * For jobs created via FLOW-1 + searched via FLOW-2, candidates are stored here.
+ *
+ * Pipeline status overrides (C-3): For mock candidates not in this store,
+ * statusOverrides tracks pipeline status changes made via bulk actions.
  */
 
 interface CandidateStoreState {
@@ -17,6 +20,8 @@ interface CandidateStoreState {
   loadingJobs: Record<string, boolean>;
   /** Error messages keyed by jobId */
   errors: Record<string, string | null>;
+  /** Pipeline status overrides for mock candidates: { "jobId:candidateId": PipelineStatus } */
+  statusOverrides: Record<string, PipelineStatus>;
 
   /** Set candidates for a job (replaces any existing) */
   setCandidates: (jobId: string, candidates: Candidate[]) => void;
@@ -30,6 +35,10 @@ interface CandidateStoreState {
   hasApiCandidates: (jobId: string) => boolean;
   /** Check if candidates have been explicitly set for a job (even if empty) */
   hasCandidatesSet: (jobId: string) => boolean;
+  /** Bulk-update pipeline status for multiple candidates in a job (C-3) */
+  bulkUpdateStatus: (jobId: string, candidateIds: string[], newStatus: PipelineStatus) => void;
+  /** Get pipeline status override for a candidate (returns undefined if no override) */
+  getStatusOverride: (jobId: string, candidateId: string) => PipelineStatus | undefined;
 }
 
 export const useCandidateStore = create<CandidateStoreState>((set, get) => ({
@@ -37,6 +46,7 @@ export const useCandidateStore = create<CandidateStoreState>((set, get) => ({
   jobsWithCandidates: {},
   loadingJobs: {},
   errors: {},
+  statusOverrides: {},
 
   setCandidates: (jobId, candidates) =>
     set((state) => ({
@@ -64,5 +74,35 @@ export const useCandidateStore = create<CandidateStoreState>((set, get) => ({
 
   hasCandidatesSet: (jobId) => {
     return get().jobsWithCandidates[jobId] === true;
+  },
+
+  bulkUpdateStatus: (jobId, candidateIds, newStatus) =>
+    set((state) => {
+      // For API-sourced candidates, update the candidatesByJob array directly
+      const apiCandidates = state.candidatesByJob[jobId];
+      const updatedApi = apiCandidates
+        ? {
+            candidatesByJob: {
+              ...state.candidatesByJob,
+              [jobId]: apiCandidates.map((c) =>
+                candidateIds.includes(c.id)
+                  ? { ...c, pipelineStatus: newStatus }
+                  : c
+              ),
+            },
+          }
+        : {};
+
+      // For all candidates (including mock), store status overrides
+      const overrides = { ...state.statusOverrides };
+      for (const cid of candidateIds) {
+        overrides[`${jobId}:${cid}`] = newStatus;
+      }
+
+      return { ...updatedApi, statusOverrides: overrides };
+    }),
+
+  getStatusOverride: (jobId, candidateId) => {
+    return get().statusOverrides[`${jobId}:${candidateId}`];
   },
 }));
