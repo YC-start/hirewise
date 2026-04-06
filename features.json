@@ -308,7 +308,7 @@
         "Test 'Reject' bulk action — verify status updates for all selected.",
         "Test 'Export to CSV' — verify a CSV file is downloaded with the selected candidates' data."
       ],
-      "passes": false,
+      "passes": true,
       "depends_on": [
         "C-2"
       ]
